@@ -1,0 +1,37 @@
+# ===== 임시 파일 =====
+~$*
+*.tmp
+*.temp
+Thumbs.db
+.DS_Store
+
+# ===== 개인/학습용 파일 =====
+학습용/
+*.xlsx
+*.xlsm
+*.xls
+
+# ===== 대용량/저작권 파일 =====
+IPCC_국가온실가스인벤토리_가이드라인/
+Scope3/
+법제도 관련/
+
+# ===== 중간 결과물 =====
+*.json
+*.py
+ghg_calculator_web/
+
+# ===== IDE/에디터 =====
+.vscode/
+.idea/
+*.code-workspace
+
+# ===== 로그/캐시 =====
+*.log
+node_modules/
+__pycache__/
+
+# ===== 백업 =====
+backup_*/
+*.zip
+

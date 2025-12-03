@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>건축물 온실가스 계산기 - 사용자 매뉴얼</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        
+        :root {
+            --primary: #9b59b6;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --bg-dark: #1e1e2f;
+            --bg-card: #2a2a3d;
+            --text: #f0f0f0;
+            --text-muted: #a0a0b0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.8;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 60px 40px;
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.2), rgba(52, 152, 219, 0.2));
+            border-radius: 20px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(155, 89, 182, 0.3);
+        }
+        
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        header .badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        nav.toc {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        nav.toc a {
+            display: block;
+            padding: 15px 20px;
+            background: rgba(155, 89, 182, 0.1);
+            border-radius: 10px;
+            color: var(--text);
+            text-decoration: none;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+        
+        nav.toc a:hover {
+            background: rgba(155, 89, 182, 0.2);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        nav.toc a .num {
+            color: var(--primary);
+            font-weight: 700;
+            margin-right: 10px;
+        }
+        
+        section {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        h2 {
+            color: var(--primary);
+            font-size: 1.6rem;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(155, 89, 182, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        h3 {
+            color: var(--secondary);
+            font-size: 1.2rem;
+            margin: 25px 0 15px;
+        }
+        
+        h4 {
+            color: var(--warning);
+            font-size: 1.05rem;
+            margin: 20px 0 10px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        th {
+            background: rgba(155, 89, 182, 0.2);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        
+        .screen-layout {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            white-space: pre;
+            color: var(--text-muted);
+            margin: 20px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .step-card {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .step-card h4 {
+            margin-top: 0;
+            color: var(--text);
+        }
+        
+        .step-card .step-num {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: 700;
+        }
+        
+        .tip-box {
+            background: rgba(52, 152, 219, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--secondary);
+            margin: 20px 0;
+        }
+        
+        .tip-box::before {
+            content: "💡 ";
+        }
+        
+        .warning-box {
+            background: rgba(231, 76, 60, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent);
+            margin: 20px 0;
+        }
+        
+        .warning-box::before {
+            content: "⚠️ ";
+        }
+        
+        .result-display {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .result-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .result-item .label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+        
+        .result-item .value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--success);
+        }
+        
+        .result-item .unit {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        
+        .theme-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .theme-card {
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .theme-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .theme-card.night {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 2px solid #9b59b6;
+        }
+        
+        .theme-card.day {
+            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+            color: #333;
+            border: 2px solid #3498db;
+        }
+        
+        .theme-card.sunset {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: #333;
+            border: 2px solid #e74c3c;
+        }
+        
+        .theme-card .emoji {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 25px;
+        }
+        
+        li {
+            margin: 8px 0;
+            color: var(--text-muted);
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+            color: #f1c40f;
+        }
+        
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: #eee;
+        }
+        
+        .faq-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .faq-item h4 {
+            color: var(--secondary);
+            margin: 0 0 10px 0;
+        }
+        
+        .faq-item p {
+            margin: 0;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.6rem;
+            }
+            
+            nav.toc {
+                grid-template-columns: 1fr;
+            }
+            
+            section {
+                padding: 25px;
+            }
+            
+            .result-display {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .theme-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🖥️ 건축물 온실가스 계산기</h1>
+            <p>웹 애플리케이션 사용자 매뉴얼</p>
+            <span class="badge">v2.0</span>
+        </header>
+        
+        <nav class="toc">
+            <a href="#section1"><span class="num">1</span> 시작하기</a>
+            <a href="#section2"><span class="num">2</span> 화면 구성</a>
+            <a href="#section3"><span class="num">3</span> 기본 설정</a>
+            <a href="#section4"><span class="num">4</span> Scope 1 계산</a>
+            <a href="#section5"><span class="num">5</span> Scope 2 계산</a>
+            <a href="#section6"><span class="num">6</span> 총 배출량 관리</a>
+            <a href="#section7"><span class="num">7</span> 테마 변경</a>
+            <a href="#section8"><span class="num">8</span> 데이터 내보내기</a>
+        </nav>
+        
+        <section id="section1">
+            <h2>🚀 1. 시작하기</h2>
+            
+            <h3>🌐 접속 방법</h3>
+            <p>웹 브라우저에서 <code>index.html</code> 파일을 열거나, 배포된 URL로 접속합니다.</p>
+            
+            <h3>⚡ 지원 브라우저</h3>
+            <ul>
+                <li><strong>Chrome</strong> (권장)</li>
+                <li>Firefox</li>
+                <li>Safari</li>
+                <li>Edge</li>
+            </ul>
+        </section>
+        
+        <section id="section2">
+            <h2>🖼️ 2. 화면 구성</h2>
+            
+            <div class="screen-layout">┌──────────────────────────────────────────────────────────────────┐
+│  🏢 건축물 온실가스 계산기                         🌙 ☀️ 🌅     │
+├──────────┬─────────────────────────────┬─────────────────────────┤
+│          │                             │                         │
+│  기본    │  Scope 1: 직접 배출         │  📊 총 온실가스 배출량  │
+│  설정    │  (연료 연소)                │                         │
+│          │                             │  [추가된 항목 목록]     │
+│  • 분야  ├─────────────────────────────┤                         │
+│  • 부문  │                             │  🔥 Scope 1: 0 tCO2eq  │
+│  • 세부  │  Scope 2: 간접 배출         │  ⚡ Scope 2: 0 tCO2eq  │
+│  • 기준  │  (전기/열)                  │  🌍 총 배출: 0 tCO2eq  │
+│          │                             │                         │
+└──────────┴─────────────────────────────┴─────────────────────────┘</div>
+            
+            <h3>📍 영역별 설명</h3>
+            <table>
+                <tr>
+                    <th>영역</th>
+                    <th>위치</th>
+                    <th>기능</th>
+                </tr>
+                <tr>
+                    <td><strong>헤더</strong></td>
+                    <td>상단</td>
+                    <td>제목, 테마 선택 버튼</td>
+                </tr>
+                <tr>
+                    <td><strong>기본 설정</strong></td>
+                    <td>좌측</td>
+                    <td>분야, 부문, 세부, 배출계수 기준 설정</td>
+                </tr>
+                <tr>
+                    <td><strong>Scope 1</strong></td>
+                    <td>중앙 상단</td>
+                    <td>연료 연소 배출량 계산</td>
+                </tr>
+                <tr>
+                    <td><strong>Scope 2</strong></td>
+                    <td>중앙 하단</td>
+                    <td>전기/열 배출량 계산</td>
+                </tr>
+                <tr>
+                    <td><strong>총 배출량</strong></td>
+                    <td>우측</td>
+                    <td>계산 결과 누적 및 합계</td>
+                </tr>
+            </table>
+        </section>
+        
+        <section id="section3">
+            <h2>⚙️ 3. 기본 설정 방법</h2>
+            
+            <h4>1) 분야/부문</h4>
+            <p>자동 설정: "1A. 에너지" / "1A4. 기타" - 건축물 배출은 이 분류에 해당</p>
+            
+            <h4>2) 세부 (건물 용도)</h4>
+            <table>
+                <tr>
+                    <th>옵션</th>
+                    <th>설명</th>
+                    <th>영향</th>
+                </tr>
+                <tr>
+                    <td><strong>주거용</strong></td>
+                    <td>아파트, 주택 등</td>
+                    <td>석탄류 CH4 = 300</td>
+                </tr>
+                <tr>
+                    <td><strong>상업용/공공</strong></td>
+                    <td>사무실, 공공건물 등</td>
+                    <td>석탄류 CH4 = 10</td>
+                </tr>
+            </table>
+            
+            <div class="warning-box">
+                <strong>중요</strong>: 석탄류 연료 사용 시 이 설정에 따라 CH4 배출량이 30배 차이남!
+            </div>
+            
+            <h4>3) 연간 배출량 (만톤/년)</h4>
+            <p>시설규모 자동 계산에 사용됩니다. 기본값: 1 (만톤)</p>
+            
+            <h4>4) 시설규모</h4>
+            <ul>
+                <li><strong>A</strong>: 5만톤 미만</li>
+                <li><strong>B</strong>: 5~50만톤</li>
+                <li><strong>C</strong>: 50만톤 이상</li>
+            </ul>
+            
+            <h4>5) 배출계수/열량계수 기준</h4>
+            <table>
+                <tr>
+                    <th>옵션</th>
+                    <th>설명</th>
+                </tr>
+                <tr>
+                    <td><strong>국가고유(17년)</strong></td>
+                    <td>2017년 환경부 고시 값</td>
+                </tr>
+                <tr>
+                    <td><strong>국가고유(22년)</strong></td>
+                    <td>2022년 환경부 고시 값 (최신)</td>
+                </tr>
+            </table>
+        </section>
+        
+        <section id="section4">
+            <h2>🔥 4. Scope 1 계산하기</h2>
+            <p>연료 연소 배출량 계산</p>
+            
+            <div class="step-card">
+                <h4><span class="step-num">1</span> 연료 선택</h4>
+                <p>드롭다운에서 연료를 선택합니다:</p>
+                <ul>
+                    <li><strong>가스류</strong>: 천연가스(LNG), 도시가스(LNG/LPG)</li>
+                    <li><strong>석유류</strong>: LPG, 휘발유, 등유, 경유, B-A/B/C유</li>
+                    <li><strong>석탄류</strong>: 국내 무연탄, 수입 무연탄, 유연탄</li>
+                </ul>
+            </div>
+            
+            <div class="step-card">
+                <h4><span class="step-num">2</span> 연료 상태 확인</h4>
+                <ul>
+                    <li><strong>Default</strong>: 연료별 기본 상태 자동 적용</li>
+                    <li>수동 선택 가능: 고체 / 액체 / 기체</li>
+                </ul>
+                <div class="tip-box">
+                    상태에 따라 산화계수가 달라집니다!
+                    <br>• 고체: 0.98 / 액체: 0.99 / 기체: 0.995
+                </div>
+            </div>
+            
+            <div class="step-card">
+                <h4><span class="step-num">3</span> 사용량 입력</h4>
+                <p>숫자를 입력합니다. 단위는 연료에 따라 자동 설정됩니다 (ton, kL, 천m³)</p>
+            </div>
+            
+            <div class="step-card">
+                <h4><span class="step-num">4</span> Tier 선택</h4>
+                <table>
+                    <tr>
+                        <th>Tier</th>
+                        <th>열량</th>
+                        <th>배출계수</th>
+                        <th>산화계수</th>
+                    </tr>
+                    <tr>
+                        <td><strong>T1 (IPCC)</strong></td>
+                        <td>국제 기본값</td>
+                        <td>국제 기본값</td>
+                        <td>1.0</td>
+                    </tr>
+                    <tr>
+                        <td><strong>T2 (국가)</strong></td>
+                        <td>국가 고유값</td>
+                        <td>국가 고유값</td>
+                        <td>연료상태별</td>
+                    </tr>
+                    <tr>
+                        <td><strong>T3 (직접입력)</strong></td>
+                        <td>직접 입력</td>
+                        <td>직접 입력</td>
+                        <td>직접 입력</td>
+                    </tr>
+                </table>
+                <div class="warning-box">
+                    <strong>산화계수 = 배출계수 Tier</strong>: 배출계수 Tier를 변경하면 산화계수도 같이 변경됨
+                </div>
+            </div>
+            
+            <div class="step-card">
+                <h4><span class="step-num">5</span> 결과 확인</h4>
+                <div class="result-display">
+                    <div class="result-item">
+                        <div class="label">CO2</div>
+                        <div class="value">2.7713</div>
+                        <div class="unit">tCO2eq</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">CH4</div>
+                        <div class="value">4.94e-5</div>
+                        <div class="unit">tCH4</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">N2O</div>
+                        <div class="value">4.94e-6</div>
+                        <div class="unit">tN2O</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">합계</div>
+                        <div class="value">2.7739</div>
+                        <div class="unit">tCO2eq</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step-card">
+                <h4><span class="step-num">6</span> 목록에 추가</h4>
+                <p><span class="btn">+ 추가</span> 버튼 클릭 → 우측 총 배출량 목록에 추가됨</p>
+            </div>
+        </section>
+        
+        <section id="section5">
+            <h2>⚡ 5. Scope 2 계산하기</h2>
+            <p>전기/열 간접 배출량 계산</p>
+            
+            <div class="step-card">
+                <h4><span class="step-num">1</span> 에너지원 선택</h4>
+                <table>
+                    <tr>
+                        <th>옵션</th>
+                        <th>설명</th>
+                    </tr>
+                    <tr>
+                        <td><strong>전기(소비단)</strong></td>
+                        <td>일반 전기 사용 (권장)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>전기(발전단)</strong></td>
+                        <td>발전소 기준</td>
+                    </tr>
+                    <tr>
+                        <td><strong>열전용/열병합/열평균</strong></td>
+                        <td>열 사용</td>
+                    </tr>
+                    <tr>
+                        <td><strong>지역난방</strong></td>
+                        <td>한국지역난방공사</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div class="step-card">
+                <h4><span class="step-num">2</span> 사용량 입력</h4>
+                <p>단위: <strong>MWh</strong> 또는 <strong>TJ</strong></p>
+            </div>
+            
+            <div class="step-card">
+                <h4><span class="step-num">3</span> 지역난방 선택 시 추가 설정</h4>
+                <p><strong>지역 목록</strong>: 수도권, 평택, 청주, 세종, 대구, 양산, 김해, 광주전남</p>
+                <p><strong>계획기간</strong>:</p>
+                <ul>
+                    <li>3기: 2019-2023</li>
+                    <li>4기: 2024-2028 (현재)</li>
+                </ul>
+            </div>
+            
+            <div class="step-card">
+                <h4><span class="step-num">4</span> 결과 확인 및 추가</h4>
+                <p><span class="btn">+ 추가</span> 버튼으로 목록에 추가</p>
+            </div>
+        </section>
+        
+        <section id="section6">
+            <h2>📊 6. 총 배출량 관리</h2>
+            
+            <h3>추가된 항목 관리</h3>
+            <div class="screen-layout">┌─────────────────────────────────────────┐
+│  📊 총 온실가스 배출량    [Excel][초기화] │
+├─────────────────────────────────────────┤
+│  🔥 천연가스(LNG) 1ton                  │
+│     CO2: 2.7713  CH4: 0.0010            │
+│     N2O: 0.0015  합계: 2.7739    [×]    │
+├─────────────────────────────────────────┤
+│  ⚡ 전기(소비단) 100MWh                 │
+│     CO2: 45.67   CH4: 0.0076            │
+│     N2O: 0.0264  합계: 45.94     [×]    │
+├─────────────────────────────────────────┤
+│  🔥 Scope 1:  2.7739 tCO2eq             │
+│  ⚡ Scope 2: 45.9400 tCO2eq             │
+│  🌍 총 배출: 48.7139 tCO2eq             │
+└─────────────────────────────────────────┘</div>
+            
+            <h4>🗑️ 항목 삭제</h4>
+            <p>각 항목 오른쪽 <span class="btn btn-outline">×</span> 버튼 클릭 → 삭제 시 합계 자동 재계산</p>
+            
+            <h4>🔄 초기화</h4>
+            <p><span class="btn btn-outline">초기화</span> 버튼: 모든 항목 삭제</p>
+        </section>
+        
+        <section id="section7">
+            <h2>🎨 7. 테마 변경</h2>
+            
+            <div class="theme-cards">
+                <div class="theme-card night">
+                    <div class="emoji">🌙</div>
+                    <h4>밤 모드</h4>
+                    <p>어두운 배경<br>눈 피로 감소</p>
+                </div>
+                <div class="theme-card day">
+                    <div class="emoji">☀️</div>
+                    <h4>낮 모드</h4>
+                    <p>밝은 배경<br>기본 테마</p>
+                </div>
+                <div class="theme-card sunset">
+                    <div class="emoji">🌅</div>
+                    <h4>선셋 모드</h4>
+                    <p>따뜻한 톤<br>감성적</p>
+                </div>
+            </div>
+            
+            <ul>
+                <li>우측 상단 버튼 클릭으로 즉시 변경</li>
+                <li>선택한 테마는 브라우저에 저장됨 (다음 방문 시 유지)</li>
+            </ul>
+        </section>
+        
+        <section id="section8">
+            <h2>📥 8. 데이터 내보내기</h2>
+            
+            <h3>Excel 내보내기</h3>
+            <ol>
+                <li><span class="btn">📥 Excel</span> 버튼 클릭</li>
+                <li>CSV 파일 자동 다운로드</li>
+                <li>Excel에서 열기 가능</li>
+            </ol>
+            
+            <h4>📄 내보내기 파일 형식</h4>
+            <pre><code>구분,항목,CO2,CH4,N2O,합계(tCO2eq)
+Scope 1,천연가스(LNG) 1ton,2.7713,0.0010,0.0015,2.7739
+Scope 2,전기(소비단) 100MWh,45.67,0.0076,0.0264,45.94
+합계,,48.44,0.0086,0.0279,48.71</code></pre>
+        </section>
+        
+        <section>
+            <h2>⚠️ 주의사항</h2>
+            
+            <div class="warning-box">
+                <strong>1. 석탄류 사용 시</strong><br>
+                반드시 세부(주거용/상업용) 설정 확인 - CH4 배출량이 30배 차이남
+            </div>
+            
+            <div class="warning-box">
+                <strong>2. Tier 선택 시</strong><br>
+                시설규모별 최소 기준 확인 - 배출계수 Tier 변경 시 산화계수도 자동 변경
+            </div>
+            
+            <div class="warning-box">
+                <strong>3. 지역난방 사용 시</strong><br>
+                정확한 지역 선택 필수 - 계획기간(3기/4기) 확인
+            </div>
+            
+            <div class="warning-box">
+                <strong>4. 단위 확인</strong><br>
+                연료별 단위 자동 설정 (ton, kL, 천m³) - 전기/열: MWh 또는 TJ 선택 가능
+            </div>
+        </section>
+        
+        <section>
+            <h2>🆘 문제 해결</h2>
+            
+            <div class="faq-item">
+                <h4>Q: 계산 결과가 0으로 나옵니다</h4>
+                <p><strong>A</strong>: 사용량이 0으로 입력되어 있는지 확인하세요.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h4>Q: 추가 버튼이 작동하지 않습니다</h4>
+                <p><strong>A</strong>: 모든 필수 항목이 선택되었는지 확인하세요.</p>
+            </div>
+            
+            <div class="faq-item">
+                <h4>Q: 지역난방 지역이 선택되지 않습니다</h4>
+                <p><strong>A</strong>: 에너지원에서 "지역난방"을 먼저 선택하세요.</p>
+            </div>
+        </section>
+        
+        <footer>
+            <p>매뉴얼 버전: 2.0 | 최종 업데이트: 2025-12-02</p>
+        </footer>
+    </div>
+</body>
+</html>
+

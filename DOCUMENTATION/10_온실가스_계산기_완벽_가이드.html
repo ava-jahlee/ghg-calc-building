@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>건축물 온실가스 계산기 완벽 가이드</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+        
+        :root {
+            --primary: #2ecc71;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --bg-dark: #1a1a2e;
+            --bg-light: #16213e;
+            --text: #eee;
+            --text-muted: #aaa;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-light) 100%);
+            color: var(--text);
+            line-height: 1.8;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 60px 0;
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 20px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        header .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        nav.toc {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        nav.toc h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        
+        nav.toc ol {
+            list-style-position: inside;
+            padding-left: 10px;
+        }
+        
+        nav.toc li {
+            margin: 10px 0;
+        }
+        
+        nav.toc a {
+            color: var(--secondary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        nav.toc a:hover {
+            color: var(--primary);
+        }
+        
+        section {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(46, 204, 113, 0.3);
+        }
+        
+        h3 {
+            color: var(--secondary);
+            font-size: 1.3rem;
+            margin: 25px 0 15px;
+        }
+        
+        h4 {
+            color: #f39c12;
+            font-size: 1.1rem;
+            margin: 20px 0 10px;
+        }
+        
+        p {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        th {
+            background: rgba(46, 204, 113, 0.2);
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+            color: #f1c40f;
+        }
+        
+        pre {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border-left: 4px solid var(--primary);
+        }
+        
+        pre code {
+            background: none;
+            padding: 0;
+            color: #eee;
+        }
+        
+        .highlight {
+            background: rgba(46, 204, 113, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+            margin: 20px 0;
+        }
+        
+        .warning {
+            background: rgba(231, 76, 60, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent);
+            margin: 20px 0;
+        }
+        
+        .info {
+            background: rgba(52, 152, 219, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--secondary);
+            margin: 20px 0;
+        }
+        
+        ul, ol {
+            margin: 15px 0;
+            padding-left: 30px;
+        }
+        
+        li {
+            margin: 8px 0;
+            color: var(--text-muted);
+        }
+        
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 8px;
+        }
+        
+        .formula-box {
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.1), rgba(52, 152, 219, 0.1));
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 25px 0;
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+        
+        .formula-box code {
+            font-size: 1.3rem;
+            color: #fff;
+            background: none;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .comparison-card {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .comparison-card h4 {
+            margin-top: 0;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+            
+            section {
+                padding: 25px;
+            }
+            
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏢 건축물 온실가스 계산기 완벽 가이드</h1>
+            <p class="subtitle">온실가스 계산의 기본 개념부터 실제 계산 방법까지,<br>전문 지식이 없는 사람도 완전히 이해할 수 있도록 작성되었습니다.</p>
+        </header>
+        
+        <nav class="toc">
+            <h2>📚 목차</h2>
+            <ol>
+                <li><a href="#section1">온실가스란 무엇인가?</a></li>
+                <li><a href="#section2">왜 온실가스를 계산해야 하는가?</a></li>
+                <li><a href="#section3">계산의 기본 원리</a></li>
+                <li><a href="#section4">Scope 1과 Scope 2의 차이</a></li>
+                <li><a href="#section5">Tier 시스템 이해하기</a></li>
+                <li><a href="#section6">실제 계산 방법</a></li>
+                <li><a href="#section7">GWP와 tCO2eq 이해하기</a></li>
+                <li><a href="#section8">연료별 특성과 배출계수</a></li>
+                <li><a href="#section9">자주 묻는 질문</a></li>
+            </ol>
+        </nav>
+        
+        <section id="section1">
+            <h2>1. 온실가스란 무엇인가?</h2>
+            
+            <h3>🌍 기본 개념</h3>
+            <p>온실가스(Greenhouse Gas, GHG)는 지구 대기 중에서 열을 가두어 지구를 따뜻하게 만드는 기체입니다. 마치 온실의 유리처럼 태양열이 빠져나가는 것을 막아 지구의 온도를 높입니다.</p>
+            
+            <h3>🔬 주요 온실가스 3가지</h3>
+            <table>
+                <tr>
+                    <th>가스</th>
+                    <th>화학식</th>
+                    <th>주요 발생원</th>
+                    <th>특징</th>
+                </tr>
+                <tr>
+                    <td><strong>이산화탄소 (CO2)</strong></td>
+                    <td>CO₂</td>
+                    <td>화석연료 연소, 호흡</td>
+                    <td>가장 많이 배출되는 온실가스</td>
+                </tr>
+                <tr>
+                    <td><strong>메탄 (CH4)</strong></td>
+                    <td>CH₄</td>
+                    <td>가축, 쓰레기 매립지, 불완전 연소</td>
+                    <td>CO2보다 21배 강력</td>
+                </tr>
+                <tr>
+                    <td><strong>아산화질소 (N2O)</strong></td>
+                    <td>N₂O</td>
+                    <td>비료, 연소 과정</td>
+                    <td>CO2보다 310배 강력</td>
+                </tr>
+            </table>
+            
+            <h3>💡 쉬운 비유</h3>
+            <div class="highlight">
+                <ul>
+                    <li><strong>CO2</strong>는 "양"이 많은 온실가스</li>
+                    <li><strong>CH4</strong>는 "힘"이 센 온실가스 (적은 양으로도 큰 영향)</li>
+                    <li><strong>N2O</strong>는 "더 힘"이 센 온실가스 (아주 적은 양으로도 엄청난 영향)</li>
+                </ul>
+            </div>
+        </section>
+        
+        <section id="section2">
+            <h2>2. 왜 온실가스를 계산해야 하는가?</h2>
+            
+            <h3>📜 법적 의무</h3>
+            <p>대한민국은 <strong>온실가스 배출권거래제</strong>를 시행하고 있습니다. 일정 규모 이상의 시설(연간 5만톤 이상)은 반드시 배출량을 보고해야 합니다.</p>
+            
+            <h3>🏗️ 건축물의 역할</h3>
+            <p>건축물은 전체 에너지 소비의 약 30%를 차지합니다.</p>
+            <ul>
+                <li>난방, 냉방, 조명, 급탕 등에서 에너지를 사용</li>
+                <li>이 에너지 사용이 곧 온실가스 배출로 이어짐</li>
+            </ul>
+            
+            <h3>📊 시설 규모 분류</h3>
+            <table>
+                <tr>
+                    <th>규모</th>
+                    <th>연간 배출량</th>
+                    <th>관리 수준</th>
+                </tr>
+                <tr>
+                    <td>A등급</td>
+                    <td>5만톤 미만</td>
+                    <td>기본 관리</td>
+                </tr>
+                <tr>
+                    <td>B등급</td>
+                    <td>5만~50만톤</td>
+                    <td>중점 관리</td>
+                </tr>
+                <tr>
+                    <td>C등급</td>
+                    <td>50만톤 이상</td>
+                    <td>집중 관리</td>
+                </tr>
+            </table>
+        </section>
+        
+        <section id="section3">
+            <h2>3. 계산의 기본 원리</h2>
+            
+            <h3>🧮 핵심 공식</h3>
+            <div class="formula-box">
+                <code>온실가스 배출량 = 활동자료 × 배출계수</code>
+            </div>
+            
+            <p><strong>활동자료</strong>: 얼마나 사용했는가? (연료 사용량, 전기 사용량 등)<br>
+            <strong>배출계수</strong>: 단위당 얼마나 배출되는가? (kg CO2/TJ 등)</p>
+            
+            <h3>🔥 연료 연소의 경우 (더 상세한 공식)</h3>
+            <div class="formula-box">
+                <code>배출량 = 연료사용량 × 열량계수 × 배출계수 × 산화계수 × 10⁻⁶</code>
+            </div>
+            
+            <table>
+                <tr>
+                    <th>요소</th>
+                    <th>설명</th>
+                    <th>예시</th>
+                </tr>
+                <tr>
+                    <td>연료사용량</td>
+                    <td>사용한 연료의 양</td>
+                    <td>1 ton, 1 kL</td>
+                </tr>
+                <tr>
+                    <td>열량계수</td>
+                    <td>연료 1단위가 가진 에너지</td>
+                    <td>49.4 MJ/kg (LNG)</td>
+                </tr>
+                <tr>
+                    <td>배출계수</td>
+                    <td>에너지 1단위당 배출되는 GHG</td>
+                    <td>56,100 kg/TJ (CO2)</td>
+                </tr>
+                <tr>
+                    <td>산화계수</td>
+                    <td>실제로 연소되는 비율</td>
+                    <td>0.995 (기체), 0.99 (액체), 0.98 (고체)</td>
+                </tr>
+            </table>
+            
+            <h3>📐 단위 변환</h3>
+            <div class="info">
+                <ul>
+                    <li><strong>1 TJ (테라줄)</strong> = 1,000,000 MJ (메가줄)</li>
+                    <li><strong>1 MWh (메가와트시)</strong> = 3.6 GJ = 0.0036 TJ</li>
+                    <li>따라서 10⁻⁶을 곱하는 이유: MJ를 TJ로 변환</li>
+                </ul>
+            </div>
+        </section>
+        
+        <section id="section4">
+            <h2>4. Scope 1과 Scope 2의 차이</h2>
+            
+            <div class="comparison-grid">
+                <div class="comparison-card">
+                    <h4>🔥 Scope 1: 직접 배출</h4>
+                    <p><strong>내가 직접 연료를 태워서 발생하는 배출</strong></p>
+                    <p>예시:</p>
+                    <ul>
+                        <li>보일러에서 가스를 태워 난방</li>
+                        <li>자가 발전기 운영</li>
+                        <li>차량 운행 (자사 소유)</li>
+                    </ul>
+                </div>
+                <div class="comparison-card">
+                    <h4>⚡ Scope 2: 간접 배출</h4>
+                    <p><strong>다른 곳에서 만든 에너지를 사용할 때 발생</strong></p>
+                    <p>예시:</p>
+                    <ul>
+                        <li>한전에서 구입한 전기 사용</li>
+                        <li>한국지역난방공사에서 공급받은 열 사용</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <h3>📊 비교표</h3>
+            <table>
+                <tr>
+                    <th>구분</th>
+                    <th>Scope 1</th>
+                    <th>Scope 2</th>
+                </tr>
+                <tr>
+                    <td>배출 위치</td>
+                    <td>내 시설 내부</td>
+                    <td>외부 (발전소 등)</td>
+                </tr>
+                <tr>
+                    <td>계산 기준</td>
+                    <td>연료 사용량</td>
+                    <td>전기/열 사용량</td>
+                </tr>
+                <tr>
+                    <td>배출계수</td>
+                    <td>연료별 고유값</td>
+                    <td>전력망/열 공급자별 값</td>
+                </tr>
+                <tr>
+                    <td>산화계수</td>
+                    <td>적용함 (CO2만)</td>
+                    <td>적용 안함</td>
+                </tr>
+            </table>
+        </section>
+        
+        <section id="section5">
+            <h2>5. Tier 시스템 이해하기</h2>
+            
+            <h3>📊 Tier란?</h3>
+            <p>IPCC(기후변화에 관한 정부간 협의체)에서 정한 <strong>계산 정확도 수준</strong>입니다.</p>
+            
+            <h3>🎯 Tier 종류</h3>
+            <table>
+                <tr>
+                    <th>Tier</th>
+                    <th>설명</th>
+                    <th>데이터 출처</th>
+                    <th>정확도</th>
+                </tr>
+                <tr>
+                    <td><strong>T1</strong></td>
+                    <td>국제 기본값</td>
+                    <td>IPCC 가이드라인</td>
+                    <td>낮음</td>
+                </tr>
+                <tr>
+                    <td><strong>T2</strong></td>
+                    <td>국가 고유값</td>
+                    <td>환경부 고시</td>
+                    <td>중간</td>
+                </tr>
+                <tr>
+                    <td><strong>T3</strong></td>
+                    <td>시설 고유값</td>
+                    <td>직접 측정/분석</td>
+                    <td>높음</td>
+                </tr>
+            </table>
+            
+            <h3>⚙️ 시설 규모에 따른 최소 기준</h3>
+            <table>
+                <tr>
+                    <th>시설규모</th>
+                    <th>열량 Tier</th>
+                    <th>배출 Tier</th>
+                    <th>산화 Tier</th>
+                </tr>
+                <tr>
+                    <td>A (5만톤 미만)</td>
+                    <td>T2 이상</td>
+                    <td>T1 이상</td>
+                    <td>T1 이상</td>
+                </tr>
+                <tr>
+                    <td>B (5~50만톤)</td>
+                    <td>T2 이상</td>
+                    <td>T2 이상</td>
+                    <td>T2 이상</td>
+                </tr>
+                <tr>
+                    <td>C (50만톤 이상)</td>
+                    <td>T3</td>
+                    <td>T3</td>
+                    <td>T3</td>
+                </tr>
+            </table>
+            
+            <div class="warning">
+                <h4>🔗 중요: 산화계수와 배출계수 Tier의 관계</h4>
+                <p>산화계수 Tier는 배출계수 Tier와 동일하게 적용됩니다.</p>
+                <ul>
+                    <li>배출 T1 → 산화 T1 (산화계수 = 1)</li>
+                    <li>배출 T2 → 산화 T2 (연료 상태별 값 적용)</li>
+                </ul>
+            </div>
+        </section>
+        
+        <section id="section6">
+            <h2>6. 실제 계산 방법</h2>
+            
+            <h3>📝 예제 1: 천연가스(LNG) 1톤 연소</h3>
+            
+            <div class="info">
+                <h4>조건</h4>
+                <ul>
+                    <li>연료: 천연가스(LNG)</li>
+                    <li>사용량: 1 ton</li>
+                    <li>열량 Tier: T2 (국가 고유값)</li>
+                    <li>배출 Tier: T1 (IPCC 값)</li>
+                </ul>
+            </div>
+            
+            <h4>Step 1: 필요한 계수 확인</h4>
+            <pre><code>열량계수 (T2): 49.4 MJ/kg = 49,400 MJ/ton
+배출계수 CO2 (T1): 56,100 kg/TJ
+배출계수 CH4 (T1): 1 kg/TJ
+배출계수 N2O (T1): 0.1 kg/TJ
+산화계수 (T1): 1.0</code></pre>
+            
+            <h4>Step 2: CO2 계산</h4>
+            <pre><code>CO2 = 1톤 × 49,400 MJ/ton × 56,100 kg/TJ × 1.0 × 10⁻⁶
+    = 1 × 49.4 × 56,100 × 1 × 0.000001
+    = <strong>2.7713 tCO2</strong></code></pre>
+            
+            <h4>Step 3: CH4 계산 (산화계수 미적용!)</h4>
+            <pre><code>CH4 = 1톤 × 49,400 MJ/ton × 1 kg/TJ × 10⁻⁶
+    = <strong>0.0000494 tCH4</strong></code></pre>
+            
+            <h4>Step 4: N2O 계산 (산화계수 미적용!)</h4>
+            <pre><code>N2O = 1톤 × 49,400 MJ/ton × 0.1 kg/TJ × 10⁻⁶
+    = <strong>0.00000494 tN2O</strong></code></pre>
+            
+            <h4>Step 5: 총 CO2 환산량 계산</h4>
+            <pre><code>tCO2eq = CO2×1 + CH4×21 + N2O×310
+       = 2.7713 + (0.0000494×21) + (0.00000494×310)
+       = 2.7713 + 0.001037 + 0.001531
+       = <strong>2.7739 tCO2eq</strong></code></pre>
+            
+            <hr style="margin: 40px 0; border-color: rgba(255,255,255,0.1);">
+            
+            <h3>📝 예제 2: 전기 1MWh 사용</h3>
+            
+            <div class="info">
+                <h4>조건</h4>
+                <ul>
+                    <li>에너지원: 전기(소비단)</li>
+                    <li>사용량: 1 MWh</li>
+                    <li>기준년도: 2017년</li>
+                </ul>
+            </div>
+            
+            <h4>Step 1: 배출계수 확인</h4>
+            <pre><code>CO2: 456.7 kg/MWh
+CH4: 0.0036 kg/MWh
+N2O: 0.0085 kg/MWh</code></pre>
+            
+            <h4>Step 2: 계산</h4>
+            <pre><code>CO2 = 1 MWh × 456.7 kg/MWh × 0.001 (kg→ton) = <strong>0.4567 tCO2</strong>
+CH4 = 1 MWh × 0.0036 kg/MWh × 0.001 = <strong>0.0000036 tCH4</strong>
+N2O = 1 MWh × 0.0085 kg/MWh × 0.001 = <strong>0.0000085 tN2O</strong></code></pre>
+            
+            <h4>Step 3: 총 CO2 환산량</h4>
+            <pre><code>tCO2eq = 0.4567 + (0.0000036×21) + (0.0000085×310)
+       = <strong>0.4594 tCO2eq</strong></code></pre>
+        </section>
+        
+        <section id="section7">
+            <h2>7. GWP와 tCO2eq 이해하기</h2>
+            
+            <h3>🌡️ GWP (지구온난화지수)</h3>
+            <p>Global Warming Potential - 각 온실가스가 CO2에 비해 얼마나 강력한지를 나타내는 수치</p>
+            
+            <table>
+                <tr>
+                    <th>온실가스</th>
+                    <th>GWP (AR4 기준)</th>
+                    <th>의미</th>
+                </tr>
+                <tr>
+                    <td>CO2</td>
+                    <td>1</td>
+                    <td>기준</td>
+                </tr>
+                <tr>
+                    <td>CH4</td>
+                    <td>21</td>
+                    <td>CO2보다 21배 강력</td>
+                </tr>
+                <tr>
+                    <td>N2O</td>
+                    <td>310</td>
+                    <td>CO2보다 310배 강력</td>
+                </tr>
+            </table>
+            
+            <h3>📊 tCO2eq (이산화탄소 환산톤)</h3>
+            <p>ton CO2 equivalent - 모든 온실가스를 CO2 기준으로 환산한 단위</p>
+            
+            <div class="formula-box">
+                <code>tCO2eq = (CO2 × 1) + (CH4 × 21) + (N2O × 310)</code>
+            </div>
+            
+            <div class="highlight">
+                <h4>예시</h4>
+                <p>CO2 10톤 + CH4 1톤 배출</p>
+                <p>tCO2eq = 10×1 + 1×21 = <strong>31 tCO2eq</strong></p>
+            </div>
+        </section>
+        
+        <section id="section8">
+            <h2>8. 연료별 특성과 배출계수</h2>
+            
+            <h4>⛽ 가스류</h4>
+            <table>
+                <tr>
+                    <th>연료</th>
+                    <th>상태</th>
+                    <th>단위</th>
+                    <th>열량(T2)</th>
+                    <th>CO2(T1)</th>
+                </tr>
+                <tr>
+                    <td>천연가스(LNG)</td>
+                    <td>기체</td>
+                    <td>ton, 천m³</td>
+                    <td>49.4 MJ/kg</td>
+                    <td>56,100</td>
+                </tr>
+                <tr>
+                    <td>도시가스(LNG)</td>
+                    <td>기체</td>
+                    <td>천m³</td>
+                    <td>38.9 MJ/Nm³</td>
+                    <td>56,100</td>
+                </tr>
+                <tr>
+                    <td>도시가스(LPG)</td>
+                    <td>기체</td>
+                    <td>천m³</td>
+                    <td>58.4 MJ/Nm³</td>
+                    <td>63,067</td>
+                </tr>
+            </table>
+            
+            <h4>🛢️ 석유류</h4>
+            <table>
+                <tr>
+                    <th>연료</th>
+                    <th>상태</th>
+                    <th>단위</th>
+                    <th>열량(T2)</th>
+                    <th>CO2(T1)</th>
+                </tr>
+                <tr>
+                    <td>휘발유</td>
+                    <td>액체</td>
+                    <td>kL</td>
+                    <td>30.4 MJ/L</td>
+                    <td>69,300</td>
+                </tr>
+                <tr>
+                    <td>등유</td>
+                    <td>액체</td>
+                    <td>kL</td>
+                    <td>34.2 MJ/L</td>
+                    <td>71,867</td>
+                </tr>
+                <tr>
+                    <td>경유</td>
+                    <td>액체</td>
+                    <td>kL</td>
+                    <td>35.2 MJ/L</td>
+                    <td>74,067</td>
+                </tr>
+                <tr>
+                    <td>B-C유</td>
+                    <td>액체</td>
+                    <td>kL</td>
+                    <td>39.2 MJ/L</td>
+                    <td>77,367</td>
+                </tr>
+            </table>
+            
+            <h4>�ite️ 석탄류</h4>
+            <table>
+                <tr>
+                    <th>연료</th>
+                    <th>상태</th>
+                    <th>단위</th>
+                    <th>열량(T2)</th>
+                    <th>CO2(T1)</th>
+                </tr>
+                <tr>
+                    <td>국내 무연탄</td>
+                    <td>고체</td>
+                    <td>ton</td>
+                    <td>19.4 MJ/kg</td>
+                    <td>98,267</td>
+                </tr>
+                <tr>
+                    <td>수입 무연탄</td>
+                    <td>고체</td>
+                    <td>ton</td>
+                    <td>20.5 MJ/kg</td>
+                    <td>98,267</td>
+                </tr>
+                <tr>
+                    <td>유연탄</td>
+                    <td>고체</td>
+                    <td>ton</td>
+                    <td>23.7 MJ/kg</td>
+                    <td>94,600</td>
+                </tr>
+            </table>
+            
+            <div class="warning">
+                <h3>🏠 주거용 vs 상업용/공공 차이</h3>
+                <p><strong>석탄류만</strong> 주거용과 상업용에서 CH4 배출계수가 다릅니다!</p>
+                <table>
+                    <tr>
+                        <th>구분</th>
+                        <th>CH4 (주거용)</th>
+                        <th>CH4 (상업용)</th>
+                        <th>차이</th>
+                    </tr>
+                    <tr>
+                        <td>석탄류 (T2)</td>
+                        <td>300 kg/TJ</td>
+                        <td>10 kg/TJ</td>
+                        <td><strong>30배!</strong></td>
+                    </tr>
+                </table>
+                <p><strong>이유</strong>: 주거용에서는 구형 연소 설비(온돌, 연탄보일러 등)를 사용하여 불완전 연소가 많이 발생</p>
+            </div>
+        </section>
+        
+        <section id="section9">
+            <h2>9. 자주 묻는 질문</h2>
+            
+            <h3>Q1. 왜 CH4와 N2O에는 산화계수를 적용하지 않나요?</h3>
+            <div class="highlight">
+                <p><strong>A</strong>: 산화계수는 "연료가 얼마나 완전히 타는가"를 나타냅니다. CO2는 완전 연소의 산물이므로 산화계수 영향을 받지만, CH4와 N2O는 불완전 연소나 연소 조건에 따라 발생하므로 이미 배출계수에 반영되어 있습니다.</p>
+            </div>
+            
+            <h3>Q2. T1과 T2 중 어떤 것을 사용해야 하나요?</h3>
+            <div class="highlight">
+                <p><strong>A</strong>: 시설 규모에 따른 최소 기준을 충족해야 합니다.</p>
+                <ul>
+                    <li>소규모(A): T1도 허용</li>
+                    <li>중규모(B): T2 이상 필수</li>
+                    <li>대규모(C): T3 필수</li>
+                </ul>
+                <p>일반적으로 T2(국가 고유값)를 사용하는 것이 한국 상황에 더 적합합니다.</p>
+            </div>
+            
+            <h3>Q3. 지역난방은 왜 별도로 계산하나요?</h3>
+            <div class="highlight">
+                <p><strong>A</strong>: 지역난방은 열 공급사마다, 그리고 계획기간(3기/4기)마다 배출계수가 다릅니다. 한국지역난방공사의 각 지사별 실제 연료 구성과 효율에 따라 배출계수가 산정됩니다.</p>
+            </div>
+            
+            <h3>Q4. 배출계수 기준년도(17년/22년)는 무엇인가요?</h3>
+            <div class="highlight">
+                <p><strong>A</strong>: 환경부에서 고시하는 국가 배출계수가 업데이트되는 연도입니다.</p>
+                <ul>
+                    <li>17년: 2017년 기준 배출계수</li>
+                    <li>22년: 2022년 기준 배출계수 (최신)</li>
+                </ul>
+                <p>최신 값을 사용하는 것이 일반적이지만, 과거 보고와의 일관성을 위해 선택할 수 있습니다.</p>
+            </div>
+            
+            <h3>Q5. 왜 전기는 MWh 단위이고 열은 TJ 단위인가요?</h3>
+            <div class="highlight">
+                <p><strong>A</strong>: 관행의 차이입니다.</p>
+                <ul>
+                    <li>전기: 전력회사 요금 청구가 kWh/MWh 단위</li>
+                    <li>열: 열량 기준으로 거래되어 TJ 단위 사용</li>
+                </ul>
+                <p>계산기에서는 자동으로 단위 변환을 처리합니다. (1 TJ = 277.778 MWh)</p>
+            </div>
+        </section>
+        
+        <section>
+            <h2>📖 참고 문헌</h2>
+            <ol>
+                <li>IPCC 2006 Guidelines for National Greenhouse Gas Inventories</li>
+                <li>온실가스 배출권거래제의 배출량 보고 및 인증에 관한 지침 (환경부)</li>
+                <li>국가 온실가스 인벤토리 보고서 (환경부)</li>
+            </ol>
+        </section>
+        
+        <footer>
+            <p>최종 업데이트: 2025-12-02 | 버전: 2.0</p>
+            <p>이 문서에 대한 질문이나 오류 발견 시 연락 바랍니다.</p>
+        </footer>
+    </div>
+</body>
+</html>
+

@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>건축물 온실가스 계산기 v2.7.1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- jsPDF (PDF 생성) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- jsPDF AutoTable (표 생성) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <!-- 스티키 헤더 -->
+    <header class="header" id="header">
+        <div class="header-content">
+            <div class="header-left">
+                <span class="logo-icon">🏢</span>
+                <div class="header-title">
+                    <h1>건축물 온실가스 계산기</h1>
+                    <span class="version">v2.7.1 | IPCC 2006 GL 기반</span>
+                </div>
+            </div>
+            <!-- 메인 탭 네비게이션 -->
+            <nav class="main-tabs">
+                <button class="main-tab active" data-tab="calculator">🧮 계산기</button>
+                <button class="main-tab" data-tab="guide">📚 완벽 가이드</button>
+                <button class="main-tab" data-tab="manual">📖 사용자 매뉴얼</button>
+            </nav>
+            <div class="header-right">
+                <div class="theme-switcher">
+                    <button class="theme-btn" data-theme="night" title="밤 모드">🌙</button>
+                    <button class="theme-btn" data-theme="day" title="낮 모드">☀️</button>
+                    <button class="theme-btn" data-theme="sunset" title="선셋 모드">🌅</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 탭 콘텐츠 컨테이너 -->
+    <div class="tab-content-container">
+        <!-- 탭 1: 계산기 -->
+        <div class="tab-content active" id="tab-calculator">
+    <!-- 메인 콘텐츠 -->
+    <main class="main-grid">
+        <!-- 좌측: 기본 설정 -->
+        <aside class="settings-column">
+            <div class="card card-settings">
+                <div class="card-header">
+                    <h2>⚙️ 기본 설정</h2>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>분야</label>
+                        <input type="text" value="1A. 에너지" readonly class="input-readonly input-sm">
+                    </div>
+                    <div class="form-group">
+                        <label>부문</label>
+                        <input type="text" value="1A4. 기타" readonly class="input-readonly input-sm">
+                    </div>
+                    <div class="form-group">
+                        <label>세부</label>
+                        <select id="buildingType" class="input-sm">
+                            <option value="주거용">주거용</option>
+                            <option value="상업용/공공">상업용/공공</option>
+                        </select>
+                    </div>
+                    <hr class="divider">
+                    
+                    <!-- 건물 정보 (원단위 계산용) -->
+                    <div class="building-info-section">
+                        <h4>🏢 건물 정보 (원단위) <button class="help-btn-sm" id="showReferenceBtn" title="참고값 보기">📊</button></h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>건물 유형</label>
+                                <select id="buildingCategory" class="input-sm">
+                                    <option value="office">사무실</option>
+                                    <option value="school">학교</option>
+                                    <option value="hospital">병원</option>
+                                    <option value="hotel">호텔</option>
+                                    <option value="mall">쇼핑몰</option>
+                                    <option value="apartment">아파트</option>
+                                    <option value="house">단독주택</option>
+                                    <option value="factory">공장</option>
+                                    <option value="other">기타</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- 참고값 패널 -->
+                        <div class="reference-panel" id="referencePanel" style="display:none;">
+                            <div class="reference-header">
+                                <span id="referenceBuildingType">사무실</span> 에너지 소비 참고값
+                                <button class="close-btn" id="closeReferenceBtn">×</button>
+                            </div>
+                            <div class="reference-content">
+                                <div class="reference-item">
+                                    <span class="ref-label">⚡ 전기</span>
+                                    <span class="ref-value" id="refElectricity">120~280 kWh/m²·년</span>
+                                    <span class="ref-typical">(일반: <strong id="refElecTypical">180</strong>)</span>
+                                </div>
+                                <div class="reference-item">
+                                    <span class="ref-label">🔥 가스</span>
+                                    <span class="ref-value" id="refGas">15~60 m³/m²·년</span>
+                                    <span class="ref-typical">(일반: <strong id="refGasTypical">35</strong>)</span>
+                                </div>
+                                <div class="reference-note" id="refDescription">냉난방, 조명, OA기기 등 포함</div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>연면적 (m²)</label>
+                                <input type="number" id="buildingArea" class="input-sm" placeholder="예: 5000" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label>재실인원 (명)</label>
+                                <input type="number" id="buildingOccupants" class="input-sm" placeholder="예: 200" min="1">
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="divider">
+                    <div class="form-group">
+                        <label>연간 배출량 (만톤/년)</label>
+                        <input type="number" id="annualEmission" value="1" min="0" step="0.1" class="input-sm">
+                    </div>
+                    <div class="form-group">
+                        <label>시설규모</label>
+                        <input type="text" id="facilitySize" value="A" readonly class="input-readonly input-sm input-highlight">
+                    </div>
+                    <hr class="divider">
+                    <div class="form-group">
+                        <label>배출계수 기준</label>
+                        <select id="emissionYear" class="input-sm">
+                            <option value="국가고유(17년)">국가고유(17년)</option>
+                            <option value="국가고유(22년)">국가고유(22년)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>열량계수 기준</label>
+                        <select id="heatYear" class="input-sm">
+                            <option value="국가고유(17년)">국가고유(17년)</option>
+                            <option value="국가고유(22년)">국가고유(22년)</option>
+                        </select>
+                    </div>
+                    <!-- GWP 기준 선택 -->
+                    <hr class="divider">
+                    <div class="form-group">
+                        <label>GWP 기준</label>
+                        <select id="gwpStandard" class="input-sm">
+                            <option value="SAR" selected>국가 인벤토리 (SAR)</option>
+                            <option value="AR4">IPCC AR4 (2007)</option>
+                            <option value="AR5">IPCC AR5 (2014)</option>
+                            <option value="AR6">IPCC AR6 (2021)</option>
+                        </select>
+                    </div>
+                    <div class="gwp-display">
+                        <span class="gwp-value">CH₄=<b id="gwpCH4">21</b></span>
+                        <span class="gwp-value">N₂O=<b id="gwpN2O">310</b></span>
+                    </div>
+                    <!-- Tier 최소 기준 표시 -->
+                    <hr class="divider">
+                    <div class="min-tier-info">
+                        <label>Tier 최소 기준</label>
+                        <div class="min-tier-grid">
+                            <span>열량: <b id="minHeatTier">T2</b></span>
+                            <span>배출: <b id="minEmissionTier">T1</b></span>
+                            <span>산화: <b id="minOxidationTier">T1</b></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 중앙: Scope 1 & 2 -->
+        <section class="scope-column">
+            <!-- Scope 1 -->
+            <div class="card card-scope1">
+                <div class="card-header">
+                    <h2>🔥 Scope 1 : 직접 배출 (연료 연소)</h2>
+                    <button class="help-btn" data-help="scope1" title="도움말">ℹ️</button>
+                </div>
+                <!-- 도움말 패널 -->
+                <div class="help-panel" id="helpPanel_scope1" style="display:none;">
+                    <div class="help-content">
+                        <p class="help-desc">건물에서 직접 연료를 연소하여 발생하는 배출량</p>
+                        <ul class="help-tips">
+                            <li>도시가스 고지서에서 사용량(m³) 확인</li>
+                            <li>보일러 연료 사용량 확인</li>
+                            <li>비상발전기 연료 사용량 포함</li>
+                        </ul>
+                        <div class="help-reference" id="scope1Reference">
+                            <!-- 동적으로 참고값 표시 -->
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="scope-grid">
+                        <!-- 연료 선택 -->
+                        <div class="scope-section">
+                            <h3>연료 정보</h3>
+                            <div class="form-row">
+                                <div class="form-group flex-2">
+                                    <label>연료</label>
+                                    <select id="scope1Fuel">
+                                        <optgroup label="가스류">
+                                            <option value="천연가스(LNG)" selected>천연가스(LNG)</option>
+                                            <option value="도시가스(LNG)">도시가스(LNG)</option>
+                                            <option value="도시가스(LPG)">도시가스(LPG)</option>
+                                        </optgroup>
+                                        <optgroup label="석유류 - LPG">
+                                            <option value="LPG (액화석유가스)">LPG</option>
+                                            <option value="프로판(LPG1호)">프로판</option>
+                                            <option value="부탄(LPG3호)">부탄</option>
+                                        </optgroup>
+                                        <optgroup label="석유류">
+                                            <option value="휘발유 (자동차용 가솔린)">휘발유</option>
+                                            <option value="등유 (기타 등유)">등유</option>
+                                            <option value="경유 (가스/디젤 오일)">경유</option>
+                                            <option value="B-A유">B-A유</option>
+                                            <option value="B-B유">B-B유</option>
+                                            <option value="B-C유 (잔여 석유연료)">B-C유</option>
+                                        </optgroup>
+                                        <optgroup label="석탄류">
+                                            <option value="국내 무연탄">국내 무연탄</option>
+                                            <option value="연료용 수입 무연탄">수입 무연탄</option>
+                                            <option value="연료용 유연탄 (기타 유연탄)">유연탄</option>
+                                        </optgroup>
+                                        <optgroup label="🌿 바이오연료 (탄소중립)">
+                                            <option value="목재펠릿">목재펠릿</option>
+                                            <option value="우드칩">우드칩</option>
+                                            <option value="폐목재">폐목재</option>
+                                            <option value="바이오가스">바이오가스</option>
+                                            <option value="바이오디젤">바이오디젤</option>
+                                            <option value="바이오에탄올">바이오에탄올</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>상태</label>
+                                    <select id="scope1FuelState">
+                                        <option value="Default" selected>Default</option>
+                                        <option value="고체">고체</option>
+                                        <option value="액체">액체</option>
+                                        <option value="기체">기체</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>적용 상태: <span id="scope1ActualState" class="state-badge">기체</span></label>
+                                <span id="biofuelBadge" class="biofuel-badge" style="display:none;">🌿 탄소중립</span>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>사용량</label>
+                                    <input type="number" id="scope1Usage" value="1" min="0" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>단위</label>
+                                    <select id="scope1Unit">
+                                        <option value="ton">ton</option>
+                                        <option value="kL">kL</option>
+                                        <option value="천m3">천m³</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tier 선택 -->
+                        <div class="scope-section">
+                            <h3>Tier 선택</h3>
+                            <div class="tier-grid">
+                                <!-- 열량계수 Tier -->
+                                <div class="tier-item">
+                                    <div class="tier-header">
+                                        <span class="tier-label">열량</span>
+                                        <span class="tier-min" id="heatTierMin">(최소: T2)</span>
+                                    </div>
+                                    <select id="scope1HeatTier" class="tier-select">
+                                        <option value="T1">T1 (IPCC)</option>
+                                        <option value="T2" selected>T2 (국가)</option>
+                                        <option value="T3">T3 (직접입력)</option>
+                                    </select>
+                                    <div class="tier-value-row">
+                                        <span class="tier-value" id="scope1HeatValue">49.4</span>
+                                        <span class="tier-unit">MJ/kg</span>
+                                    </div>
+                                    <div class="t3-input" id="heatT3Input" style="display:none;">
+                                        <input type="number" id="scope1HeatT3" step="0.1" placeholder="직접입력">
+                                    </div>
+                                </div>
+                                <!-- 배출계수 Tier -->
+                                <div class="tier-item">
+                                    <div class="tier-header">
+                                        <span class="tier-label">배출 (CO2)</span>
+                                        <span class="tier-min" id="emissionTierMin">(최소: T1)</span>
+                                    </div>
+                                    <select id="scope1EmissionTier" class="tier-select">
+                                        <option value="T1" selected>T1 (IPCC)</option>
+                                        <option value="T2">T2 (국가)</option>
+                                        <option value="T3">T3 (직접입력)</option>
+                                    </select>
+                                    <div class="tier-value-row">
+                                        <span class="tier-value" id="scope1EmissionValue">56,100</span>
+                                        <span class="tier-unit">kg/TJ</span>
+                                    </div>
+                                    <div class="t3-input" id="emissionT3Input" style="display:none;">
+                                        <input type="number" id="scope1EmissionT3" step="1" placeholder="직접입력">
+                                    </div>
+                                </div>
+                                <!-- 산화계수 Tier (배출계수와 연동) -->
+                                <div class="tier-item">
+                                    <div class="tier-header">
+                                        <span class="tier-label">산화</span>
+                                        <span class="tier-min" id="oxidationTierMin">(=배출Tier)</span>
+                                    </div>
+                                    <input type="text" id="scope1OxidationTier" value="T1" readonly class="tier-select input-readonly">
+                                    <div class="tier-value-row">
+                                        <span class="tier-value" id="scope1OxidationValue">1.000</span>
+                                        <span class="tier-unit"></span>
+                                    </div>
+                                    <div class="t3-input" id="oxidationT3Input" style="display:none;">
+                                        <input type="number" id="scope1OxidationT3" step="0.001" placeholder="직접입력">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 결과 -->
+                    <div class="result-row">
+                        <div class="result-item result-co2">
+                            <span class="result-label">CO2</span>
+                            <span class="result-value" id="scope1ResultCO2">2.7596</span>
+                            <span class="result-unit">tCO2eq</span>
+                        </div>
+                        <div class="result-item result-ch4">
+                            <span class="result-label">CH4</span>
+                            <span class="result-value" id="scope1ResultCH4">0.0002</span>
+                            <span class="result-unit">tCH4</span>
+                        </div>
+                        <div class="result-item result-n2o">
+                            <span class="result-label">N2O</span>
+                            <span class="result-value" id="scope1ResultN2O">4.92e-6</span>
+                            <span class="result-unit">tN2O</span>
+                        </div>
+                        <div class="result-item result-total">
+                            <span class="result-label">합계</span>
+                            <span class="result-value" id="scope1Total">2.7663</span>
+                            <span class="result-unit">tCO2eq</span>
+                        </div>
+                        <button class="btn-add" id="addScope1Btn">+ 추가</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scope 2 -->
+            <div class="card card-scope2">
+                <div class="card-header">
+                    <h2>⚡ Scope 2 : 간접 배출 (전기/열)</h2>
+                    <button class="help-btn" data-help="scope2" title="도움말">ℹ️</button>
+                </div>
+                <!-- 도움말 패널 -->
+                <div class="help-panel" id="helpPanel_scope2" style="display:none;">
+                    <div class="help-content">
+                        <p class="help-desc">구매한 전기, 열 사용으로 인한 간접 배출량</p>
+                        <ul class="help-tips">
+                            <li>한전 전기요금 고지서에서 사용량(kWh) 확인</li>
+                            <li>지역난방 고지서에서 사용량(Gcal 또는 MJ) 확인</li>
+                            <li>연간 총 사용량으로 입력</li>
+                        </ul>
+                        <div class="help-reference" id="scope2Reference">
+                            <!-- 동적으로 참고값 표시 -->
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="scope-grid">
+                        <!-- 에너지원 선택 -->
+                        <div class="scope-section">
+                            <h3>에너지원</h3>
+                            <div class="form-row">
+                                <div class="form-group flex-2">
+                                    <label>구분</label>
+                                    <select id="scope2Source">
+                                        <optgroup label="전기">
+                                            <option value="전기(소비단)" selected>전기(소비단)</option>
+                                            <option value="전기(발전단)">전기(발전단)</option>
+                                        </optgroup>
+                                        <optgroup label="열(스팀)">
+                                            <option value="열전용">열전용</option>
+                                            <option value="열병합">열병합</option>
+                                            <option value="열평균">열평균</option>
+                                        </optgroup>
+                                        <optgroup label="지역난방">
+                                            <option value="지역난방">지역난방</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- 전력 배출계수 기준 선택 -->
+                            <div class="form-row" id="electricityYearSection">
+                                <div class="form-group">
+                                    <label>📅 전력 배출계수 기준</label>
+                                    <select id="electricityYear">
+                                        <optgroup label="📋 배출권거래제 (고정값)">
+                                            <option value="ETS_4기" selected>4기 (2024-2028) - 474.7</option>
+                                            <option value="ETS_3기">3기 (2019-2023) - 456.7</option>
+                                        </optgroup>
+                                        <optgroup label="📊 연도별 실측값 (GIR)">
+                                            <option value="2022">2022년 실측 - 436.3</option>
+                                            <option value="2021">2021년 실측 - 450.9</option>
+                                            <option value="2020">2020년 실측 - 459.4</option>
+                                            <option value="2019">2019년 실측 - 459.8</option>
+                                            <option value="2018">2018년 실측 - 458.5</option>
+                                            <option value="2017">2017년 실측 - 458.5</option>
+                                        </optgroup>
+                                    </select>
+                                    <small class="coef-note" id="electricityCoefNote">출처: 배출권거래제 4기 지침 (환경부)</small>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>사용량</label>
+                                    <input type="number" id="scope2Usage" value="1" min="0" step="0.01">
+                                    <div class="input-warning" id="scope2Warning" style="display:none;">
+                                        <span class="warning-icon">⚠️</span>
+                                        <span class="warning-text" id="scope2WarningText"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>단위</label>
+                                    <select id="scope2Unit">
+                                        <option value="MWh" selected>MWh</option>
+                                        <option value="TJ">TJ</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Tier 표시 + 지역난방 설정 -->
+                        <div class="scope-section">
+                            <h3>Tier / 배출계수</h3>
+                            <!-- Tier 표시 -->
+                            <div class="scope2-tier-display">
+                                <div class="tier-badge" id="scope2PowerTierBadge">
+                                    <span>전력 Tier:</span> <b id="scope2PowerTier">T2</b>
+                                </div>
+                                <div class="tier-badge" id="scope2HeatTierBadge">
+                                    <span>열 Tier:</span> 
+                                    <select id="scope2HeatTier" class="tier-select-mini">
+                                        <option value="-">-</option>
+                                        <option value="T2">T2</option>
+                                        <option value="T3">T3 (직접)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- 지역난방 설정 (숨김) -->
+                            <div id="districtHeatingSection" style="display: none;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>지역</label>
+                                        <select id="districtRegion">
+                                            <option value="수도권지사">수도권</option>
+                                            <option value="평택지사">평택</option>
+                                            <option value="청주지사">청주</option>
+                                            <option value="세종지사">세종</option>
+                                            <option value="대구지사">대구</option>
+                                            <option value="양산지사">양산</option>
+                                            <option value="김해지사">김해</option>
+                                            <option value="광주전남지사">광주전남</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>계획기간</label>
+                                        <select id="districtPeriod">
+                                            <option value="3기">3기 (19-23)</option>
+                                            <option value="4기" selected>4기 (24-28)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- T3 직접입력 (열) -->
+                            <div class="t3-input" id="scope2HeatT3Input" style="display:none;">
+                                <label>열 배출계수 직접입력</label>
+                                <div class="form-row">
+                                    <input type="number" id="scope2HeatT3CO2" step="0.1" placeholder="CO2 (kg/TJ)">
+                                    <input type="number" id="scope2HeatT3CH4" step="0.001" placeholder="CH4">
+                                    <input type="number" id="scope2HeatT3N2O" step="0.001" placeholder="N2O">
+                                </div>
+                            </div>
+
+                            <!-- 배출계수 표시 -->
+                            <div class="coef-display">
+                                <div class="coef-item">
+                                    <span class="coef-label">CO2</span>
+                                    <span class="coef-value" id="scope2CoefCO2">456.7</span>
+                                    <span class="coef-unit" id="scope2CoefUnit">kg/MWh</span>
+                                </div>
+                                <div class="coef-item">
+                                    <span class="coef-label">CH4</span>
+                                    <span class="coef-value" id="scope2CoefCH4">0.004</span>
+                                </div>
+                                <div class="coef-item">
+                                    <span class="coef-label">N2O</span>
+                                    <span class="coef-value" id="scope2CoefN2O">0.009</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 결과 -->
+                    <div class="result-row">
+                        <div class="result-item result-co2">
+                            <span class="result-label">CO2</span>
+                            <span class="result-value" id="scope2ResultCO2">0.4567</span>
+                            <span class="result-unit">tCO2eq</span>
+                        </div>
+                        <div class="result-item result-ch4">
+                            <span class="result-label">CH4</span>
+                            <span class="result-value" id="scope2ResultCH4">4.00e-6</span>
+                            <span class="result-unit">tCH4</span>
+                        </div>
+                        <div class="result-item result-n2o">
+                            <span class="result-label">N2O</span>
+                            <span class="result-value" id="scope2ResultN2O">9.00e-6</span>
+                            <span class="result-unit">tN2O</span>
+                        </div>
+                        <div class="result-item result-total">
+                            <span class="result-label">합계</span>
+                            <span class="result-value" id="scope2Total">0.4596</span>
+                            <span class="result-unit">tCO2eq</span>
+                        </div>
+                        <button class="btn-add" id="addScope2Btn">+ 추가</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scope 3 -->
+            <div class="card card-scope3">
+                <div class="card-header">
+                    <h2>🚗 Scope 3 : 기타 간접 배출</h2>
+                    <button class="help-btn" data-help="scope3" title="도움말">ℹ️</button>
+                </div>
+                <!-- 도움말 패널 -->
+                <div class="help-panel" id="helpPanel_scope3" style="display:none;">
+                    <div class="help-content">
+                        <p class="help-desc">출장, 통근, 폐기물 등 기타 활동으로 인한 배출량</p>
+                        <ul class="help-tips">
+                            <li>출장: 왕복 거리로 입력 (서울-부산 KTX 약 840km)</li>
+                            <li>통근: 편도 거리 입력 (왕복 자동계산)</li>
+                            <li>폐기물: 연간 처리량 (ton)</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- 교통 배출계수 기준 선택 (출장/통근 전용) -->
+                    <div class="emission-standard-selector" id="transportStandardSelector">
+                        <label class="selector-label">📊 교통 배출계수 기준:</label>
+                        <div class="selector-options">
+                            <label class="radio-option">
+                                <input type="radio" name="transportStandard" value="ESTIMATE" checked>
+                                <span class="radio-label">⚠️ 추정치</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="transportStandard" value="DEFRA">
+                                <span class="radio-label">DEFRA 2024</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="transportStandard" value="FUEL_BASED">
+                                <span class="radio-label">연료 기반</span>
+                            </label>
+                        </div>
+                        <p class="selector-note" id="standardNote">공식 출처 미확인, 대략적 규모 파악용</p>
+                        
+                        <!-- 연료 기반 입력 (FUEL_BASED 선택 시 표시) -->
+                        <div class="fuel-based-inputs" id="fuelBasedInputs">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>연료 종류</label>
+                                    <select id="fuelType">
+                                        <option value="휘발유">휘발유</option>
+                                        <option value="경유">경유</option>
+                                        <option value="LPG">LPG</option>
+                                        <option value="CNG">CNG (압축천연가스)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>입력 방식</label>
+                                    <select id="fuelInputMethod">
+                                        <option value="fuel">연료 사용량 직접 입력</option>
+                                        <option value="distance">이동거리 + 연비</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row" id="fuelDirectInput">
+                                <div class="form-group flex-2">
+                                    <label>연료 사용량</label>
+                                    <input type="number" id="fuelAmount" value="50" min="0" step="0.1">
+                                </div>
+                                <div class="form-group flex-1">
+                                    <label>단위</label>
+                                    <span class="input-readonly" id="fuelUnit">L</span>
+                                </div>
+                            </div>
+                            <div class="form-row" id="fuelDistanceInput" style="display:none;">
+                                <div class="form-group">
+                                    <label>이동거리 (km)</label>
+                                    <input type="number" id="fuelDistance" value="500" min="0" step="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>연비 (km/L)</label>
+                                    <input type="number" id="fuelEfficiency" value="12.5" min="0.1" step="0.1">
+                                </div>
+                            </div>
+                            <div class="fuel-result">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>CO2</label>
+                                        <span class="result-value" id="fuelCO2">0</span> kg
+                                    </div>
+                                    <div class="form-group">
+                                        <label>CH4</label>
+                                        <span class="result-value" id="fuelCH4">0</span> kg
+                                    </div>
+                                    <div class="form-group">
+                                        <label>N2O</label>
+                                        <span class="result-value" id="fuelN2O">0</span> kg
+                                    </div>
+                                    <div class="form-group">
+                                        <label>합계 (tCO2eq)</label>
+                                        <span class="result-value result-total-value" id="fuelTotal">0</span>
+                                    </div>
+                                </div>
+                                <button class="btn-add" id="addFuelBtn">+ 연료 배출량 추가</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 탭 선택 -->
+                    <div class="scope3-tabs">
+                        <button class="scope3-tab active" data-tab="travel">✈️ 출장</button>
+                        <button class="scope3-tab" data-tab="commute">🚌 통근</button>
+                        <button class="scope3-tab" data-tab="waste">🗑️ 폐기물</button>
+                        <button class="scope3-tab" data-tab="water">💧 용수</button>
+                    </div>
+
+                    <!-- 출장 탭 -->
+                    <div class="scope3-panel" id="travelPanel">
+                        <div class="scope3-grid">
+                            <div class="scope3-section">
+                                <h3>출장 정보</h3>
+                                <div class="form-group">
+                                    <label>교통수단</label>
+                                    <select id="travelTransport">
+                                        <optgroup label="⚠️ 항공 (추정치)">
+                                            <option value="항공_국내">항공 (국내선)</option>
+                                            <option value="항공_국제_단거리">항공 (국제-단거리)</option>
+                                            <option value="항공_국제_장거리">항공 (국제-장거리)</option>
+                                        </optgroup>
+                                        <optgroup label="⚠️ 철도 (추정치)">
+                                            <option value="KTX">KTX/SRT</option>
+                                            <option value="일반열차">일반열차</option>
+                                        </optgroup>
+                                        <optgroup label="⚠️ 버스 (추정치)">
+                                            <option value="시외버스">시외/고속버스</option>
+                                        </optgroup>
+                                        <optgroup label="⚠️ 승용차 (추정치)">
+                                            <option value="승용차_휘발유">승용차 (휘발유)</option>
+                                            <option value="승용차_경유">승용차 (경유)</option>
+                                            <option value="승용차_LPG">승용차 (LPG)</option>
+                                            <option value="승용차_하이브리드">승용차 (하이브리드)</option>
+                                            <option value="승용차_전기">승용차 (전기)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <label>이동거리</label>
+                                        <input type="number" id="travelDistance" value="100" min="0" step="1">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label>단위</label>
+                                        <span class="input-readonly" id="travelUnit">km</span>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="travelPeopleGroup">
+                                    <label>탑승인원</label>
+                                    <input type="number" id="travelPeople" value="1" min="1" step="1">
+                                </div>
+                            </div>
+                            <div class="scope3-section">
+                                <h3>배출계수</h3>
+                                <div class="coef-display compact">
+                                    <div class="coef-item">
+                                        <span class="coef-label">CO2eq</span>
+                                        <span class="coef-value" id="travelCoef">0.158</span>
+                                        <span class="coef-unit" id="travelCoefUnit">kg/인·km</span>
+                                    </div>
+                                </div>
+                                <p class="coef-note" id="travelNote">국내선 항공 평균</p>
+                                <p class="coef-warning">⚠️ 참고용 추정치 (공식 출처 미확인)</p>
+                            </div>
+                        </div>
+                        <!-- 출장 결과 -->
+                        <div class="result-row scope3-result">
+                            <div class="result-item result-total">
+                                <span class="result-label">출장 배출량</span>
+                                <span class="result-value" id="travelTotal">0.0158</span>
+                                <span class="result-unit">tCO2eq</span>
+                            </div>
+                            <button class="btn-add" id="addTravelBtn">+ 추가</button>
+                        </div>
+                    </div>
+
+                    <!-- 통근 탭 -->
+                    <div class="scope3-panel" id="commutePanel" style="display:none;">
+                        <div class="scope3-grid">
+                            <div class="scope3-section">
+                                <h3>통근 정보</h3>
+                                <div class="form-group">
+                                    <label>교통수단</label>
+                                    <select id="commuteTransport">
+                                        <optgroup label="⚠️ 대중교통 (추정치)">
+                                            <option value="지하철">지하철/도시철도</option>
+                                            <option value="시내버스">시내버스</option>
+                                        </optgroup>
+                                        <optgroup label="⚠️ 승용차 (추정치)">
+                                            <option value="승용차_휘발유">승용차 (휘발유)</option>
+                                            <option value="승용차_경유">승용차 (경유)</option>
+                                            <option value="승용차_LPG">승용차 (LPG)</option>
+                                            <option value="승용차_하이브리드">승용차 (하이브리드)</option>
+                                            <option value="승용차_전기">승용차 (전기)</option>
+                                        </optgroup>
+                                        <optgroup label="친환경 (무배출)">
+                                            <option value="자전거">자전거</option>
+                                            <option value="도보">도보</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <label>편도 거리 <small>(왕복 자동계산)</small></label>
+                                        <input type="number" id="commuteDistance" value="10" min="0" step="0.1">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label>단위</label>
+                                        <span class="input-readonly">km</span>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>출근일수 (연간)</label>
+                                        <input type="number" id="commuteWorkdays" value="250" min="1" max="365" step="1">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>통근인원</label>
+                                        <input type="number" id="commutePeople" value="1" min="1" step="1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="scope3-section">
+                                <h3>배출계수</h3>
+                                <div class="coef-display compact">
+                                    <div class="coef-item">
+                                        <span class="coef-label">CO2eq</span>
+                                        <span class="coef-value" id="commuteCoef">0.014</span>
+                                        <span class="coef-unit" id="commuteCoefUnit">kg/인·km</span>
+                                    </div>
+                                </div>
+                                <p class="coef-note" id="commuteNote">도시철도</p>
+                                <p class="coef-warning">⚠️ 참고용 추정치 (공식 출처 미확인)</p>
+                            </div>
+                        </div>
+                        <!-- 통근 결과 -->
+                        <div class="result-row scope3-result">
+                            <div class="result-item result-total">
+                                <span class="result-label">통근 배출량 (연간, 왕복기준)</span>
+                                <span class="result-value" id="commuteTotal">0.0700</span>
+                                <span class="result-unit">tCO2eq</span>
+                            </div>
+                            <button class="btn-add" id="addCommuteBtn">+ 추가</button>
+                        </div>
+                    </div>
+
+                    <!-- 폐기물 탭 -->
+                    <div class="scope3-panel" id="wastePanel" style="display:none;">
+                        <div class="scope3-grid">
+                            <div class="scope3-section">
+                                <h3>폐기물 정보</h3>
+                                <div class="form-group">
+                                    <label>처리 방법</label>
+                                    <select id="wasteType">
+                                        <optgroup label="✅ 소각 (공식 데이터)">
+                                            <option value="소각_생활폐기물">생활폐기물 소각</option>
+                                            <option value="소각_사업장폐기물">사업장폐기물 소각</option>
+                                            <option value="소각_하수슬러지">하수슬러지 소각</option>
+                                            <option value="소각_의료폐기물">의료폐기물 소각</option>
+                                        </optgroup>
+                                        <optgroup label="⚠️ 매립 (추정치)">
+                                            <option value="매립_일반">일반폐기물 매립</option>
+                                            <option value="매립_음식물">음식물폐기물 매립</option>
+                                            <option value="매립_종이류">종이류 매립</option>
+                                        </optgroup>
+                                        <optgroup label="⚠️ 재활용 (추정치, 감축효과)">
+                                            <option value="재활용_종이">종이류 재활용</option>
+                                            <option value="재활용_플라스틱">플라스틱 재활용</option>
+                                            <option value="재활용_금속">금속 재활용</option>
+                                            <option value="재활용_유리">유리 재활용</option>
+                                        </optgroup>
+                                        <optgroup label="⚠️ 퇴비화 (추정치)">
+                                            <option value="퇴비화">음식물 퇴비화</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <label>폐기물량</label>
+                                        <input type="number" id="wasteAmount" value="1" min="0" step="0.1">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label>단위</label>
+                                        <span class="input-readonly">ton</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="scope3-section">
+                                <h3>배출계수</h3>
+                                <div class="coef-display compact">
+                                    <div class="coef-item">
+                                        <span class="coef-label">CO2eq</span>
+                                        <span class="coef-value" id="wasteCoef">587</span>
+                                        <span class="coef-unit">kg/ton</span>
+                                    </div>
+                                </div>
+                                <p class="coef-note" id="wasteNote">관리형 매립지 기준</p>
+                            </div>
+                        </div>
+                        <!-- 폐기물 결과 -->
+                        <div class="result-row scope3-result">
+                            <div class="result-item result-total">
+                                <span class="result-label">폐기물 배출량</span>
+                                <span class="result-value" id="wasteTotal">0.5870</span>
+                                <span class="result-unit">tCO2eq</span>
+                            </div>
+                            <button class="btn-add" id="addWasteBtn">+ 추가</button>
+                        </div>
+                    </div>
+
+                    <!-- 용수 탭 -->
+                    <div class="scope3-panel" id="waterPanel" style="display:none;">
+                        <div class="scope3-grid">
+                            <div class="scope3-section">
+                                <h3>용수 정보</h3>
+                                <div class="form-group">
+                                    <label>용수 종류</label>
+                                    <select id="waterType">
+                                        <optgroup label="⚠️ 상수 (추정치)">
+                                            <option value="상수_일반">상수도 사용</option>
+                                            <option value="상수_지하수">지하수 사용</option>
+                                        </optgroup>
+                                        <optgroup label="✅ 하수처리 (공식 데이터)">
+                                            <option value="하수_물리적처리">하수처리 (물리적)</option>
+                                            <option value="하수_생물학적처리">하수처리 (생물학적)</option>
+                                            <option value="하수_고도처리">고도하수처리</option>
+                                            <option value="하수_종말처리">폐수종말처리</option>
+                                        </optgroup>
+                                        <optgroup label="⚠️ 대체수원 (추정치)">
+                                            <option value="중수도">중수도 재이용</option>
+                                            <option value="빗물이용">빗물 이용</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group flex-2">
+                                        <label>사용량 (연간)</label>
+                                        <input type="number" id="waterAmount" value="1000" min="0" step="100">
+                                    </div>
+                                    <div class="form-group flex-1">
+                                        <label>단위</label>
+                                        <span class="input-readonly">m³</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="scope3-section">
+                                <h3>배출계수</h3>
+                                <div class="coef-display compact">
+                                    <div class="coef-item">
+                                        <span class="coef-label">CO2eq</span>
+                                        <span class="coef-value" id="waterCoef">0.237</span>
+                                        <span class="coef-unit">kg/m³</span>
+                                    </div>
+                                </div>
+                                <p class="coef-note" id="waterNote">취수-정수-송수 과정</p>
+                            </div>
+                        </div>
+                        <!-- 용수 결과 -->
+                        <div class="result-row scope3-result">
+                            <div class="result-item result-total">
+                                <span class="result-label">용수 배출량 (연간)</span>
+                                <span class="result-value" id="waterTotal">0.2370</span>
+                                <span class="result-unit">tCO2eq</span>
+                            </div>
+                            <button class="btn-add" id="addWaterBtn">+ 추가</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 우측: 총 배출량 목록 -->
+        <aside class="summary-column">
+            <div class="card card-summary">
+                <div class="card-header">
+                    <h2>📊 총 배출량</h2>
+                </div>
+                <!-- 도구 버튼 박스 -->
+                <div class="tool-buttons">
+                    <button class="tool-btn" id="saveFileBtn" title="JSON 저장">💾<span>저장</span></button>
+                    <button class="tool-btn" id="loadFileBtn" title="불러오기">📂<span>불러오기</span></button>
+                    <input type="file" id="fileInput" accept=".json" style="display:none;">
+                    <button class="tool-btn" id="exportExcelBtn" title="Excel">📥<span>Excel</span></button>
+                    <button class="tool-btn" id="exportPdfBtn" title="PDF">📄<span>PDF</span></button>
+                    <button class="tool-btn" id="clearListBtn" title="초기화">🗑️<span>초기화</span></button>
+                </div>
+                <div class="card-body">
+                    <!-- 추가된 항목 리스트 -->
+                    <div class="emission-list" id="emissionList">
+                        <div class="empty-list">
+                            <span>🌱</span>
+                            <p>Scope 1 또는 Scope 2에서<br>계산 후 '+ 추가' 버튼을 눌러주세요</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 총합 -->
+                    <div class="total-summary">
+                        <div class="total-row">
+                            <span class="total-label">🔥 Scope 1</span>
+                            <span class="total-value" id="totalScope1">0</span>
+                            <span class="total-unit">tCO2eq</span>
+                        </div>
+                        <div class="total-row">
+                            <span class="total-label">⚡ Scope 2</span>
+                            <span class="total-value" id="totalScope2">0</span>
+                            <span class="total-unit">tCO2eq</span>
+                        </div>
+                        <div class="total-row">
+                            <span class="total-label">🚗 Scope 3</span>
+                            <span class="total-value" id="totalScope3">0</span>
+                            <span class="total-unit">tCO2eq</span>
+                        </div>
+                        <div class="total-row total-grand">
+                            <span class="total-label">🌍 총 배출량</span>
+                            <span class="total-value" id="grandTotal">0</span>
+                            <span class="total-unit">tCO2eq</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 원단위 분석 -->
+                    <div class="unit-analysis" id="unitAnalysis" style="display:none;">
+                        <h4>📊 원단위 분석</h4>
+                        <div class="unit-grid">
+                            <div class="unit-card">
+                                <span class="unit-icon">📐</span>
+                                <span class="unit-value" id="emissionPerArea">-</span>
+                                <span class="unit-label">kgCO2eq/m²·년</span>
+                            </div>
+                            <div class="unit-card">
+                                <span class="unit-icon">👤</span>
+                                <span class="unit-value" id="emissionPerPerson">-</span>
+                                <span class="unit-label">tCO2eq/인·년</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 벤치마크 비교 -->
+                        <div class="benchmark-section" id="benchmarkSection">
+                            <h5>🎯 벤치마크 비교</h5>
+                            <div class="benchmark-bar-container">
+                                <div class="benchmark-bar">
+                                    <div class="benchmark-fill" id="benchmarkFill"></div>
+                                    <div class="benchmark-marker" id="benchmarkMarker">
+                                        <span class="marker-label">내 건물</span>
+                                    </div>
+                                </div>
+                                <div class="benchmark-labels">
+                                    <span class="bench-label good">우수</span>
+                                    <span class="bench-label avg">평균</span>
+                                    <span class="bench-label poor">개선필요</span>
+                                </div>
+                            </div>
+                            <div class="benchmark-result" id="benchmarkResult">
+                                <span class="result-text">건물 정보를 입력하면 벤치마크 비교가 표시됩니다.</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- G-SEED / ZEB 인증 예측 -->
+                    <div class="certification-section" id="certificationSection" style="display:none;">
+                        <h4>🏆 녹색건축 인증 예측</h4>
+                        
+                        <!-- G-SEED -->
+                        <div class="cert-card gseed-card">
+                            <div class="cert-header">
+                                <span class="cert-icon">🌿</span>
+                                <span class="cert-title">G-SEED</span>
+                                <span class="cert-subtitle">녹색건축인증</span>
+                            </div>
+                            <div class="cert-score">
+                                <div class="score-ring" id="gseedRing">
+                                    <svg viewBox="0 0 100 100">
+                                        <circle class="ring-bg" cx="50" cy="50" r="45"/>
+                                        <circle class="ring-fill" id="gseedRingFill" cx="50" cy="50" r="45"/>
+                                    </svg>
+                                    <div class="score-text">
+                                        <span class="score-value" id="gseedScore">-</span>
+                                        <span class="score-max">/100</span>
+                                    </div>
+                                </div>
+                                <div class="score-grade" id="gseedGrade">-</div>
+                            </div>
+                            <div class="cert-details" id="gseedDetails">
+                                <div class="detail-row">
+                                    <span>에너지</span>
+                                    <span class="detail-value" id="gseedEnergy">-/12</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>온실가스</span>
+                                    <span class="detail-value" id="gseedGhg">-/6</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span>기타 항목</span>
+                                    <span class="detail-value">+기본점</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ZEB -->
+                        <div class="cert-card zeb-card">
+                            <div class="cert-header">
+                                <span class="cert-icon">⚡</span>
+                                <span class="cert-title">ZEB</span>
+                                <span class="cert-subtitle">제로에너지빌딩</span>
+                            </div>
+                            <div class="zeb-input">
+                                <label>신재생에너지 (kWh/년)</label>
+                                <input type="number" id="renewableEnergy" class="input-sm" placeholder="예: 50000" min="0">
+                            </div>
+                            <div class="zeb-result">
+                                <div class="zeb-rate">
+                                    <span class="rate-label">에너지자립률</span>
+                                    <span class="rate-value" id="zebRate">-%</span>
+                                </div>
+                                <div class="zeb-grade" id="zebGrade">
+                                    <span class="grade-badge">-</span>
+                                </div>
+                            </div>
+                            <div class="zeb-tip" id="zebTip">
+                                신재생에너지 생산량을 입력하면<br>ZEB 등급을 예측합니다.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 차트 영역 -->
+                    <div class="chart-section" id="chartSection" style="display:none;">
+                        <h3>📈 배출량 분석</h3>
+                        <div class="chart-tabs">
+                            <button class="chart-tab active" data-chart="pie">Scope 비율</button>
+                            <button class="chart-tab" data-chart="bar">항목별 비교</button>
+                            <button class="chart-tab" data-chart="line">시계열 트렌드</button>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="emissionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+        </div><!-- /tab-calculator -->
+
+        <!-- 탭 2: 완벽 가이드 -->
+        <div class="tab-content" id="tab-guide">
+            <div class="guide-container">
+                <article class="guide-content">
+                    <h1>🏢 건축물 온실가스 계산기 완벽 가이드</h1>
+                    <p class="guide-intro">이 문서는 온실가스 계산의 기본 개념부터 실제 계산 방법까지, 전문 지식이 없는 사람도 완전히 이해할 수 있도록 작성되었습니다.</p>
+                    
+                    <nav class="guide-toc">
+                        <h3>📚 목차</h3>
+                        <ol>
+                            <li><a href="#guide-1">온실가스란 무엇인가?</a></li>
+                            <li><a href="#guide-2">왜 온실가스를 계산해야 하는가?</a></li>
+                            <li><a href="#guide-3">계산의 기본 원리</a></li>
+                            <li><a href="#guide-4">Scope 1, 2, 3의 차이</a></li>
+                            <li><a href="#guide-5">Tier 시스템 이해하기</a></li>
+                            <li><a href="#guide-6">실제 계산 방법</a></li>
+                            <li><a href="#guide-7">GWP와 tCO2eq 이해하기</a></li>
+                            <li><a href="#guide-8">연료별 특성과 배출계수</a></li>
+                            <li><a href="#guide-9">전력 배출계수 기준</a></li>
+                            <li><a href="#guide-10">원단위 분석과 벤치마크</a></li>
+                        </ol>
+                    </nav>
+
+                    <section id="guide-1" class="guide-section">
+                        <h2>1. 온실가스란 무엇인가?</h2>
+                        <h3>🌍 기본 개념</h3>
+                        <p>온실가스(Greenhouse Gas, GHG)는 지구 대기 중에서 열을 가두어 지구를 따뜻하게 만드는 기체입니다. 마치 온실의 유리처럼 태양열이 빠져나가는 것을 막아 지구의 온도를 높입니다.</p>
+                        
+                        <h3>🔬 주요 온실가스 3가지</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>가스</th><th>화학식</th><th>주요 발생원</th><th>특징</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>이산화탄소</strong></td><td>CO₂</td><td>화석연료 연소, 호흡</td><td>가장 많이 배출</td></tr>
+                                <tr><td><strong>메탄</strong></td><td>CH₄</td><td>가축, 쓰레기 매립지</td><td>CO2보다 21~28배 강력</td></tr>
+                                <tr><td><strong>아산화질소</strong></td><td>N₂O</td><td>비료, 연소 과정</td><td>CO2보다 265~310배 강력</td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="guide-tip">
+                            <strong>💡 쉬운 비유</strong>
+                            <ul>
+                                <li>CO2는 "양"이 많은 온실가스</li>
+                                <li>CH4는 "힘"이 센 온실가스 (적은 양으로도 큰 영향)</li>
+                                <li>N2O는 "더 힘"이 센 온실가스 (아주 적은 양으로도 엄청난 영향)</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                    <section id="guide-2" class="guide-section">
+                        <h2>2. 왜 온실가스를 계산해야 하는가?</h2>
+                        <h3>📜 법적 의무</h3>
+                        <p>대한민국은 <strong>온실가스 배출권거래제</strong>를 시행하고 있습니다. 일정 규모 이상의 시설(연간 5만톤 이상)은 반드시 배출량을 보고해야 합니다.</p>
+                        
+                        <h3>🏗️ 건축물의 역할</h3>
+                        <p>건축물은 전체 에너지 소비의 약 30%를 차지합니다.</p>
+                        <ul>
+                            <li>난방, 냉방, 조명, 급탕 등에서 에너지를 사용</li>
+                            <li>이 에너지 사용이 곧 온실가스 배출로 이어짐</li>
+                        </ul>
+                        
+                        <h3>📊 시설 규모 분류</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>규모</th><th>연간 배출량</th><th>관리 수준</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>A등급</td><td>5만톤 미만</td><td>기본 관리</td></tr>
+                                <tr><td>B등급</td><td>5만~50만톤</td><td>중점 관리</td></tr>
+                                <tr><td>C등급</td><td>50만톤 이상</td><td>집중 관리</td></tr>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section id="guide-3" class="guide-section">
+                        <h2>3. 계산의 기본 원리</h2>
+                        <h3>🧮 핵심 공식</h3>
+                        <div class="guide-formula">
+                            온실가스 배출량 = 활동자료 × 배출계수
+                        </div>
+                        <ul>
+                            <li><strong>활동자료</strong>: 얼마나 사용했는가? (연료 사용량, 전기 사용량 등)</li>
+                            <li><strong>배출계수</strong>: 단위당 얼마나 배출되는가? (kg CO2/TJ 등)</li>
+                        </ul>
+                        
+                        <h3>🔥 연료 연소의 경우</h3>
+                        <div class="guide-formula">
+                            배출량 = 연료사용량 × 열량계수 × 배출계수 × 산화계수 × 10⁻⁶
+                        </div>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>요소</th><th>설명</th><th>예시</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>연료사용량</td><td>사용한 연료의 양</td><td>1 ton, 1 kL</td></tr>
+                                <tr><td>열량계수</td><td>연료 1단위가 가진 에너지</td><td>49.4 MJ/kg (LNG)</td></tr>
+                                <tr><td>배출계수</td><td>에너지 1단위당 배출되는 GHG</td><td>56,100 kg/TJ</td></tr>
+                                <tr><td>산화계수</td><td>실제로 연소되는 비율</td><td>0.995 (기체)</td></tr>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section id="guide-4" class="guide-section">
+                        <h2>4. Scope 1, 2, 3의 차이</h2>
+                        
+                        <div class="scope-cards">
+                            <div class="scope-card scope1">
+                                <h4>🔥 Scope 1: 직접 배출</h4>
+                                <p>내가 직접 연료를 태워서 발생하는 배출</p>
+                                <ul>
+                                    <li>보일러에서 가스를 태워 난방</li>
+                                    <li>자가 발전기 운영</li>
+                                    <li>차량 운행 (자사 소유)</li>
+                                </ul>
+                            </div>
+                            <div class="scope-card scope2">
+                                <h4>⚡ Scope 2: 간접 배출</h4>
+                                <p>다른 곳에서 만든 에너지를 사용할 때 발생</p>
+                                <ul>
+                                    <li>한전에서 구입한 전기 사용</li>
+                                    <li>지역난방공사에서 공급받은 열 사용</li>
+                                </ul>
+                            </div>
+                            <div class="scope-card scope3">
+                                <h4>🚗 Scope 3: 기타 간접 배출</h4>
+                                <p>가치사슬 내 기타 활동에서 발생</p>
+                                <ul>
+                                    <li>출장 (항공, KTX, 버스, 승용차)</li>
+                                    <li>통근 (직원 출퇴근)</li>
+                                    <li>폐기물, 용수 처리</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="guide-5" class="guide-section">
+                        <h2>5. Tier 시스템 이해하기</h2>
+                        <p>IPCC에서 정한 <strong>계산 정확도 수준</strong>입니다.</p>
+                        
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>Tier</th><th>설명</th><th>데이터 출처</th><th>정확도</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><strong>T1</strong></td><td>국제 기본값</td><td>IPCC 가이드라인</td><td>낮음</td></tr>
+                                <tr><td><strong>T2</strong></td><td>국가 고유값</td><td>환경부 고시</td><td>중간</td></tr>
+                                <tr><td><strong>T3</strong></td><td>시설 고유값</td><td>직접 측정/분석</td><td>높음</td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3>시설 규모에 따른 최소 기준</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>시설규모</th><th>열량 Tier</th><th>배출 Tier</th><th>산화 Tier</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>A (5만톤 미만)</td><td>T2 이상</td><td>T1 이상</td><td>T1 이상</td></tr>
+                                <tr><td>B (5~50만톤)</td><td>T2 이상</td><td>T2 이상</td><td>T2 이상</td></tr>
+                                <tr><td>C (50만톤 이상)</td><td>T3</td><td>T3</td><td>T3</td></tr>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section id="guide-6" class="guide-section">
+                        <h2>6. 실제 계산 방법</h2>
+                        
+                        <h3>📝 예제: 천연가스(LNG) 1톤 연소</h3>
+                        <div class="guide-example">
+                            <p><strong>조건:</strong> 천연가스 1ton, 열량 T2, 배출 T1</p>
+                            <div class="calc-steps">
+                                <p><strong>Step 1:</strong> 열량계수 49.4 MJ/kg, 배출계수 56,100 kg/TJ</p>
+                                <p><strong>Step 2:</strong> CO2 = 1 × 49,400 × 56,100 × 1.0 × 10⁻⁶ = <strong>2.7713 tCO2</strong></p>
+                                <p><strong>Step 3:</strong> CH4, N2O 계산 후 GWP 적용</p>
+                                <p><strong>결과:</strong> <span class="result-highlight">2.7739 tCO2eq</span></p>
+                            </div>
+                        </div>
+                        
+                        <h3>📝 예제: 전기 100MWh 사용</h3>
+                        <div class="guide-example">
+                            <p><strong>조건:</strong> 전기(소비단) 100MWh, 4기 배출계수 (474.7 kg/MWh)</p>
+                            <div class="calc-steps">
+                                <p><strong>계산:</strong> 100 × 474.7 ÷ 1000 = <strong>47.47 tCO2</strong></p>
+                                <p><strong>결과:</strong> <span class="result-highlight">47.81 tCO2eq</span> (CH4, N2O 포함)</p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="guide-7" class="guide-section">
+                        <h2>7. GWP와 tCO2eq 이해하기</h2>
+                        
+                        <h3>🌡️ GWP (지구온난화지수)</h3>
+                        <p>각 온실가스가 CO2에 비해 얼마나 강력한지를 나타내는 수치</p>
+                        
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>온실가스</th><th>SAR (국가)</th><th>AR4</th><th>AR5</th><th>AR6</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>CO2</td><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+                                <tr><td>CH4</td><td><strong>21</strong></td><td>25</td><td>28</td><td>27.9</td></tr>
+                                <tr><td>N2O</td><td><strong>310</strong></td><td>298</td><td>265</td><td>273</td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3>📊 tCO2eq 계산</h3>
+                        <div class="guide-formula">
+                            tCO2eq = (CO2 × 1) + (CH4 × 21) + (N2O × 310)
+                        </div>
+                    </section>
+
+                    <section id="guide-8" class="guide-section">
+                        <h2>8. 연료별 특성과 배출계수</h2>
+                        
+                        <h3>⛽ 가스류</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>연료</th><th>단위</th><th>열량(T2)</th><th>CO2(T1)</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>천연가스(LNG)</td><td>ton</td><td>49.4 MJ/kg</td><td>56,100</td></tr>
+                                <tr><td>도시가스(LNG)</td><td>천m³</td><td>38.9 MJ/Nm³</td><td>56,100</td></tr>
+                                <tr><td>도시가스(LPG)</td><td>천m³</td><td>58.4 MJ/Nm³</td><td>63,067</td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3>🛢️ 석유류</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>연료</th><th>단위</th><th>열량(T2)</th><th>CO2(T1)</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>휘발유</td><td>kL</td><td>30.4 MJ/L</td><td>69,300</td></tr>
+                                <tr><td>등유</td><td>kL</td><td>34.2 MJ/L</td><td>71,867</td></tr>
+                                <tr><td>경유</td><td>kL</td><td>35.2 MJ/L</td><td>74,067</td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3>🌱 바이오연료</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>연료</th><th>단위</th><th>열량(T2)</th><th>비고</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>목재펠릿</td><td>ton</td><td>16.7 MJ/kg</td><td>바이오매스</td></tr>
+                                <tr><td>바이오가스</td><td>천m³</td><td>20.6 MJ/Nm³</td><td>매립지/혐기성</td></tr>
+                                <tr><td>바이오디젤</td><td>kL</td><td>32.7 MJ/L</td><td>식물성 유지</td></tr>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section id="guide-9" class="guide-section">
+                        <h2>9. 전력 배출계수 기준</h2>
+                        
+                        <h3>📅 배출권거래제 (ETS) 고정값</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>계획기간</th><th>기간</th><th>CO2 (kg/MWh)</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>3기</td><td>2019-2023</td><td>456.7</td></tr>
+                                <tr><td><strong>4기</strong></td><td><strong>2024-2028</strong></td><td><strong>474.7</strong></td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3>📊 연도별 실측값</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>연도</th><th>CO2 (kg/MWh)</th><th>출처</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>2022</td><td>436.3</td><td>온실가스종합정보센터</td></tr>
+                                <tr><td>2021</td><td>450.9</td><td>온실가스종합정보센터</td></tr>
+                                <tr><td>2020</td><td>459.4</td><td>온실가스종합정보센터</td></tr>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section id="guide-10" class="guide-section">
+                        <h2>10. 원단위 분석과 벤치마크</h2>
+                        
+                        <h3>📐 원단위 분석</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>지표</th><th>단위</th><th>계산식</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>면적당 배출량</td><td>kgCO2eq/m²·년</td><td>총 배출량(kg) ÷ 연면적(m²)</td></tr>
+                                <tr><td>인당 배출량</td><td>tCO2eq/인·년</td><td>총 배출량(t) ÷ 재실인원</td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3>🎯 건물 유형별 벤치마크</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>건물 유형</th><th>우수</th><th>평균</th><th>개선필요</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>사무실</td><td>&lt;50</td><td>71</td><td>&gt;100</td></tr>
+                                <tr><td>학교</td><td>&lt;35</td><td>50</td><td>&gt;70</td></tr>
+                                <tr><td>병원</td><td>&lt;90</td><td>140</td><td>&gt;200</td></tr>
+                                <tr><td>호텔</td><td>&lt;60</td><td>100</td><td>&gt;140</td></tr>
+                            </tbody>
+                        </table>
+                        <p class="guide-note">(단위: kgCO2eq/m²·년)</p>
+                    </section>
+
+                    <div class="guide-footer">
+                        <p>📖 참고 문헌: IPCC 2006 GL, 온실가스 배출권거래제 지침, 국가 온실가스 인벤토리 보고서</p>
+                        <p>최종 업데이트: 2025-12-03 | 버전: 2.7.1</p>
+                    </div>
+                </article>
+            </div>
+        </div><!-- /tab-guide -->
+
+        <!-- 탭 3: 사용자 매뉴얼 -->
+        <div class="tab-content" id="tab-manual">
+            <div class="guide-container">
+                <article class="guide-content">
+                    <h1>🖥️ 웹 애플리케이션 사용자 매뉴얼</h1>
+                    <p class="guide-intro">건축물 온실가스 계산기 v2.7.1의 모든 기능을 쉽게 사용하는 방법을 안내합니다.</p>
+                    
+                    <nav class="guide-toc">
+                        <h3>📋 목차</h3>
+                        <ol>
+                            <li><a href="#manual-1">화면 구성</a></li>
+                            <li><a href="#manual-2">기본 설정</a></li>
+                            <li><a href="#manual-3">Scope 1 계산</a></li>
+                            <li><a href="#manual-4">Scope 2 계산</a></li>
+                            <li><a href="#manual-5">Scope 3 계산</a></li>
+                            <li><a href="#manual-6">결과 분석</a></li>
+                            <li><a href="#manual-7">저장/내보내기</a></li>
+                            <li><a href="#manual-8">자주 묻는 질문</a></li>
+                        </ol>
+                    </nav>
+
+                    <section id="manual-1" class="guide-section">
+                        <h2>1. 화면 구성</h2>
+                        <div class="manual-layout">
+                            <div class="layout-diagram">
+                                <div class="layout-item layout-left">⚙️ 기본 설정<br>🏢 건물 정보</div>
+                                <div class="layout-item layout-center">
+                                    <div>🔥 Scope 1</div>
+                                    <div>⚡ Scope 2</div>
+                                    <div>🚗 Scope 3</div>
+                                </div>
+                                <div class="layout-item layout-right">📊 총 배출량<br>📈 차트<br>🏆 인증 예측</div>
+                            </div>
+                        </div>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>영역</th><th>위치</th><th>기능</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>기본 설정</td><td>좌측</td><td>배출계수, GWP, 건물 정보 설정</td></tr>
+                                <tr><td>Scope 1/2/3</td><td>중앙</td><td>배출량 계산</td></tr>
+                                <tr><td>총 배출량</td><td>우측</td><td>결과 합계, 차트, 인증 예측</td></tr>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section id="manual-2" class="guide-section">
+                        <h2>2. 기본 설정</h2>
+                        
+                        <h3>🏢 건물 정보 입력</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>항목</th><th>설명</th><th>용도</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>건물 유형</td><td>사무실, 학교, 병원 등</td><td>벤치마크 비교</td></tr>
+                                <tr><td>연면적 (m²)</td><td>건물 총 면적</td><td>면적당 배출량</td></tr>
+                                <tr><td>재실인원 (명)</td><td>상주 인원 수</td><td>인당 배출량</td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="guide-tip">
+                            💡 <strong>참고값 보기 (📊 버튼)</strong>: 건물 유형별 에너지 소비 참고값을 확인할 수 있습니다.
+                        </div>
+                        
+                        <h3>⚙️ 배출계수 설정</h3>
+                        <ul>
+                            <li><strong>배출계수 기준</strong>: 국가고유(17년) / 국가고유(22년)</li>
+                            <li><strong>GWP 기준</strong>: SAR (국가) / AR4 / AR5 / AR6</li>
+                        </ul>
+                    </section>
+
+                    <section id="manual-3" class="guide-section">
+                        <h2>3. Scope 1 계산 (연료 연소)</h2>
+                        
+                        <div class="step-guide">
+                            <div class="step">
+                                <span class="step-number">1</span>
+                                <span class="step-text">연료 선택 (천연가스, 도시가스, 경유 등)</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-number">2</span>
+                                <span class="step-text">사용량 입력 (단위 자동 설정)</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-number">3</span>
+                                <span class="step-text">Tier 선택 (T1/T2/T3)</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-number">4</span>
+                                <span class="step-text">결과 확인 후 [+ 추가] 클릭</span>
+                            </div>
+                        </div>
+                        
+                        <div class="guide-tip">
+                            ⚠️ <strong>주의</strong>: 석탄류 사용 시 "세부(주거용/상업용)" 설정에 따라 CH4 배출량이 30배 차이납니다!
+                        </div>
+                    </section>
+
+                    <section id="manual-4" class="guide-section">
+                        <h2>4. Scope 2 계산 (전기/열)</h2>
+                        
+                        <h3>⚡ 전기 계산</h3>
+                        <div class="step-guide">
+                            <div class="step">
+                                <span class="step-number">1</span>
+                                <span class="step-text">에너지원 선택: 전기(소비단)</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-number">2</span>
+                                <span class="step-text">배출계수 기준 선택 (4기/3기 또는 연도별 실측)</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-number">3</span>
+                                <span class="step-text">사용량 입력 (MWh 또는 TJ)</span>
+                            </div>
+                            <div class="step">
+                                <span class="step-number">4</span>
+                                <span class="step-text">[+ 추가] 클릭</span>
+                            </div>
+                        </div>
+                        
+                        <h3>📅 전력 배출계수 선택</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>옵션</th><th>값 (kg/MWh)</th><th>용도</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>4기 (2024-2028)</td><td>474.7</td><td>배출권거래제 보고</td></tr>
+                                <tr><td>3기 (2019-2023)</td><td>456.7</td><td>배출권거래제 보고</td></tr>
+                                <tr><td>2022년 실측</td><td>436.3</td><td>실제 배출량 추적</td></tr>
+                            </tbody>
+                        </table>
+                    </section>
+
+                    <section id="manual-5" class="guide-section">
+                        <h2>5. Scope 3 계산 (기타 간접)</h2>
+                        
+                        <h3>✈️ 출장/통근</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>탭</th><th>입력 항목</th><th>단위</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>출장</td><td>교통수단, 이동거리</td><td>인·km</td></tr>
+                                <tr><td>통근</td><td>편도거리, 출근일수, 인원</td><td>km, 일, 명</td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3>📊 배출계수 기준 선택</h3>
+                        <ul>
+                            <li><strong>⚠️ 추정치</strong>: 대략적 규모 파악 (공식 출처 미확인)</li>
+                            <li><strong>DEFRA 2024</strong>: 영국 정부 공식 배출계수</li>
+                            <li><strong>연료 기반</strong>: 연비 입력으로 계산</li>
+                        </ul>
+                        
+                        <h3>🗑️ 폐기물/💧 용수</h3>
+                        <ul>
+                            <li>폐기물: 일반(매립/소각), 음식물(매립/퇴비화)</li>
+                            <li>용수: 상수, 중수, 하수</li>
+                        </ul>
+                    </section>
+
+                    <section id="manual-6" class="guide-section">
+                        <h2>6. 결과 분석</h2>
+                        
+                        <h3>📊 원단위 분석</h3>
+                        <ul>
+                            <li><strong>📐 면적당</strong>: kgCO2eq/m²·년</li>
+                            <li><strong>👤 인당</strong>: tCO2eq/인·년</li>
+                        </ul>
+                        
+                        <h3>🎯 벤치마크 비교</h3>
+                        <p>선택한 건물 유형의 평균 대비 배출 수준을 표시합니다.</p>
+                        
+                        <h3>🏆 녹색건축 인증 예측</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>인증</th><th>기준</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>G-SEED</td><td>배출량 기준 점수 (50~80점)</td></tr>
+                                <tr><td>ZEB</td><td>에너지자립률 (20~100%)</td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <h3>📈 차트 분석</h3>
+                        <ul>
+                            <li><strong>Scope 비율</strong>: 파이 차트</li>
+                            <li><strong>항목별 비교</strong>: 막대 차트</li>
+                            <li><strong>시계열 트렌드</strong>: 라인 차트</li>
+                        </ul>
+                    </section>
+
+                    <section id="manual-7" class="guide-section">
+                        <h2>7. 저장/내보내기</h2>
+                        
+                        <h3>💾 데이터 관리</h3>
+                        <table class="guide-table">
+                            <thead>
+                                <tr><th>버튼</th><th>기능</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>💾 저장</td><td>JSON 파일로 다운로드</td></tr>
+                                <tr><td>📂 불러오기</td><td>저장한 JSON 파일 복원</td></tr>
+                                <tr><td>📥 Excel</td><td>CSV 파일 내보내기</td></tr>
+                                <tr><td>📄 PDF</td><td>종합 리포트 생성</td></tr>
+                                <tr><td>🗑️ 초기화</td><td>모든 항목 삭제</td></tr>
+                            </tbody>
+                        </table>
+                        
+                        <div class="guide-tip">
+                            💡 <strong>자동 저장</strong>: 모든 데이터는 브라우저에 자동 저장됩니다. 브라우저를 닫아도 유지!
+                        </div>
+                    </section>
+
+                    <section id="manual-8" class="guide-section">
+                        <h2>8. 자주 묻는 질문</h2>
+                        
+                        <div class="faq-item">
+                            <h4>Q: 계산 결과가 0으로 나옵니다</h4>
+                            <p>A: 사용량이 0으로 입력되어 있는지 확인하세요.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h4>Q: 원단위 분석이 표시되지 않습니다</h4>
+                            <p>A: 건물 정보(연면적, 재실인원)를 입력하고, 항목을 1개 이상 추가하세요.</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h4>Q: ETS 배출계수와 실측값 중 무엇을 사용하나요?</h4>
+                            <p>A: 배출권거래제 보고 → ETS 값, 실제 추적 → 연도별 실측값</p>
+                        </div>
+                        
+                        <div class="faq-item">
+                            <h4>Q: 데이터가 사라졌습니다</h4>
+                            <p>A: 브라우저 캐시를 삭제하면 복구 불가. JSON 파일로 백업하세요!</p>
+                        </div>
+                    </section>
+
+                    <div class="guide-footer">
+                        <h3>📞 버전 정보</h3>
+                        <table class="guide-table version-table">
+                            <thead>
+                                <tr><th>버전</th><th>날짜</th><th>주요 변경</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>v2.7.1</td><td>2025-12-03</td><td>입력 도움말, UI 개선, 탭 가이드</td></tr>
+                                <tr><td>v2.7</td><td>2025-12-03</td><td>전력 배출계수 연도별 선택</td></tr>
+                                <tr><td>v2.6</td><td>2025-12-03</td><td>G-SEED, ZEB 인증 예측</td></tr>
+                                <tr><td>v2.5</td><td>2025-12-03</td><td>원단위 분석, 벤치마크</td></tr>
+                            </tbody>
+                        </table>
+                        <p>최종 업데이트: 2025-12-03 | 매뉴얼 버전: 2.7.1</p>
+                    </div>
+                </article>
+            </div>
+        </div><!-- /tab-manual -->
+    </div><!-- /tab-content-container -->
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <p>IPCC 2006 GL | 온실가스 배출권거래제 지침</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/data.js"></script>
+    <script src="js/calculator.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
